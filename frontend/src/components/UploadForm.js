@@ -37,7 +37,7 @@ function UploadForm() {
     formDataToSend.append('contactEmail', formData.contactEmail);
 
     try {
-      const response = await fetch('/api/upload-business-data', {
+      const response = await fetch('http://localhost:5000/api/upload-business-data', {
         method: 'POST',
         body: formDataToSend,
       });
