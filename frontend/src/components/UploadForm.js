@@ -64,7 +64,6 @@ function UploadForm() {
     <div className="max-w-xl mx-auto p-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg shadow-lg border border-blue-300">
       <h2 className="text-3xl font-bold mb-4 text-blue-800 text-center">Upload Your Business Data</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Business Name */}
         <div>
           <label className="block text-gray-700 mb-1" htmlFor="businessName">Business Name</label>
           <input 
@@ -73,7 +72,7 @@ function UploadForm() {
             name="businessName" 
             value={formData.businessName} 
             onChange={handleChange} 
-            className="border border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" 
+            className="border border-blue-300 text-black p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" 
             placeholder="Enter your business name"
             required
           />
@@ -87,7 +86,7 @@ function UploadForm() {
             name="industry" 
             value={formData.industry} 
             onChange={handleChange} 
-            className="border border-blue-300 p-2 text-gray-700 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            className="border border-blue-300 p-2 text-black rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             required
           >
             <option value="">Select your industry</option>
@@ -97,6 +96,7 @@ function UploadForm() {
             <option value="education">Education</option>
             <option value="retail">Retail</option>
             <option value="manufacturing">Manufacturing</option>
+            <option value="e-commerce">E-commerce</option>
             <option value="others">Others</option>
           </select>
         </div>
@@ -122,7 +122,7 @@ function UploadForm() {
             name="description" 
             value={formData.description} 
             onChange={handleChange} 
-            className="border border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" 
+            className="border border-blue-300 text-black p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" 
             rows="2" 
             placeholder="Enter a brief description of the data..."
             required
@@ -138,7 +138,7 @@ function UploadForm() {
             name="contactEmail" 
             value={formData.contactEmail} 
             onChange={handleChange} 
-            className="border border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" 
+            className="border border-blue-300 p-2 text-black rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" 
             placeholder="Enter your contact email"
             required
           />
