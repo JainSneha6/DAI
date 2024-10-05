@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function NavBar() {
   return (
@@ -8,9 +9,8 @@ function NavBar() {
         <a href="#" className="text-white text-3xl font-bold">DecisivAI</a>
         
         <div className="flex space-x-6">
-          <a href="#" className="text-white hover:text-blue-500 transition duration-300">Home</a>
-          <a href="#" className="text-white hover:text-blue-500 transition duration-300">Your Business</a>
-          <a href="#" className="text-white hover:text-blue-500 transition duration-300">Features</a>
+          <Link to="/" className="text-white hover:text-blue-500 transition duration-300">Home</Link>
+          <Link to="/virtual-consultant" className="text-white hover:text-blue-500 transition duration-300">Virtual Consultant</Link>
         </div>
       </div>
     </nav>
