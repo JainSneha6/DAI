@@ -7,9 +7,6 @@ function VirtualConsultant() {
       <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
       <div className="relative flex flex-col items-center justify-center h-screen px-6">
         <h1 className="text-5xl font-bold mb-6 text-center">Virtual Consultant</h1>
-        <p className="text-2xl text-center mb-6 max-w-2xl">
-          Upload your business data to train our AI model for better decision-making.
-        </p>
         <UploadForm />
       </div>
     </div>
