@@ -10,6 +10,7 @@ function NavBar() {
         
         <div className="flex space-x-6">
           <Link to="/" className="text-white hover:text-blue-500 transition duration-300">Home</Link>
+          <Link to="/upload" className="text-white hover:text-blue-500 transition duration-300">Your Business</Link>
           <Link to="/virtual-consultant" className="text-white hover:text-blue-500 transition duration-300">Virtual Consultant</Link>
         </div>
       </div>

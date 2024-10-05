@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 
 function UploadForm() {
   const [formData, setFormData] = useState({
@@ -8,6 +9,8 @@ function UploadForm() {
     description: '',
     contactEmail: '',
   });
+  
+  const navigate = useNavigate(); 
 
   const handleFileChange = (event) => {
     setFormData({ ...formData, file: event.target.files[0] });
@@ -42,15 +45,8 @@ function UploadForm() {
       if (response.ok) {
         const data = await response.json();
         console.log('Success:', data);
-        alert('File uploaded successfully!');
-        // Reset form fields
-        setFormData({
-          businessName: '',
-          industry: '',
-          file: null,
-          description: '',
-          contactEmail: '',
-        });
+        alert('File uploaded successfully! You can now ask a question.');
+        navigate('/ask-question');
       } else {
         console.error('Error:', response.statusText);
         alert('File upload failed.');
@@ -62,6 +58,9 @@ function UploadForm() {
   };
 
   return (
+    <div className="relative bg-cover bg-center min-h-screen text-white" style={{ backgroundImage: "url('/background.png')" }}>
+      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm">
+      <div className="relative flex flex-col items-center justify-center h-screen px-6">
     <div className="max-w-xl mx-auto p-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg shadow-lg border border-blue-300">
       <h2 className="text-3xl font-bold mb-4 text-blue-800 text-center">Upload Your Business Data</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -104,7 +103,7 @@ function UploadForm() {
 
         {/* File Upload */}
         <div>
-          <label className="block text-gray-700 mb-1 " htmlFor="file">Select File</label>
+          <label className="block text-gray-700 mb-1" htmlFor="file">Select File</label>
           <input 
             type="file" 
             id="file" 
@@ -124,7 +123,7 @@ function UploadForm() {
             value={formData.description} 
             onChange={handleChange} 
             className="border border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" 
-            rows="2" // Shorter height for the textarea
+            rows="2" 
             placeholder="Enter a brief description of the data..."
             required
           />
@@ -152,6 +151,9 @@ function UploadForm() {
           Upload
         </button>
       </form>
+    </div>
+    </div>
+    </div>
     </div>
   );
 }

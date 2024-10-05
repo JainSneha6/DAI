@@ -1,8 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/HomePage'; // Adjust the path as necessary
-import VirtualConsultant from './components/VirtualConsultant'; // Import the VirtualConsultant component
+import HomePage from './pages/HomePage'; 
+import VirtualConsultant from './components/VirtualConsultant'; 
 import NavBar from './components/NavBar';
+import AskQuestion from './components/AskQuestion';
+import UploadForm from './components/UploadForm';
 
 function App() {
   return (
@@ -10,7 +12,9 @@ function App() {
       <NavBar />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/upload" element={<UploadForm/>}/>
         <Route path="/virtual-consultant" element={<VirtualConsultant />} />
+        <Route path="/ask-question" element={<AskQuestion />} />
       </Routes>
     </Router>
   );

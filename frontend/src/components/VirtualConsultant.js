@@ -1,5 +1,5 @@
 import React from 'react';
-import UploadForm from './UploadForm';
+import AskQuestion from './AskQuestion';
 
 function VirtualConsultant() {
   return (
@@ -7,7 +7,7 @@ function VirtualConsultant() {
       <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
       <div className="relative flex flex-col items-center justify-center h-screen px-6">
         <h1 className="text-5xl font-bold mb-6 text-center">Virtual Consultant</h1>
-        <UploadForm />
+        <AskQuestion/>
       </div>
     </div>
   );
