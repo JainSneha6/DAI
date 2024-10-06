@@ -19,6 +19,7 @@ function InsightBot() {
       });
 
       setAnalysisResult(response.data);
+      console.log(analysisResult);
     } catch (error) {
       setError(`Failed to analyze the ${dataType}. Please try again.`);
     } finally {
@@ -33,7 +34,7 @@ function InsightBot() {
           <button
             key={key}
             className="bg-gray-700 text-gray-200 font-semibold py-1 px-3 rounded hover:bg-gray-600 transition duration-200"
-            title={`Frequency: ${value}`} 
+            title={`Frequency: ${value}`}
           >
             {key}
           </button>
@@ -42,45 +43,78 @@ function InsightBot() {
     );
   };
 
+  // Function to render grouped numerical analysis
+  const renderGroupedAnalysis = (groupedAnalysis) => {
+    return Object.entries(groupedAnalysis).map(([category, data]) => (
+      <div key={category} className="mb-6">
+        <h3 className="text-2xl font-bold mb-2 text-gray-300">{category} Analysis</h3>
+        <table className="min-w-full bg-gray-800 border border-gray-700">
+          <thead>
+            <tr>
+              <th className="py-2 px-4 text-left text-gray-400">Details</th>
+              {data[0] && Object.keys(data[0]).map((key) => (
+                <th key={key} className="py-2 px-4 text-left text-gray-400">{key}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, idx) => (
+              <tr key={idx} className="border-b border-gray-700">
+                <td className="py-2 px-4 text-gray-200">{row[category]}</td>
+                {Object.entries(row).map(([key, value]) => (
+                  key !== category && (
+                    <td key={key} className="py-2 px-4 text-gray-200">{value}</td>
+                  )
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ));
+  };
+
+  const renderNumericalAnalysis = (numerical) => {
+    return (
+      <div className="mb-6">
+        <h3 className="text-2xl font-bold mb-2 text-gray-300">Numerical Data Analysis</h3>
+        <table className="min-w-full bg-gray-800 border border-gray-700">
+          <thead>
+            <tr>
+              <th className="py-2 px-4 text-left text-gray-400">Column Name</th>
+              <th className="py-2 px-4 text-left text-gray-400">Sum</th>
+              <th className="py-2 px-4 text-left text-gray-400">Mean</th>
+              <th className="py-2 px-4 text-left text-gray-400">Max</th>
+              <th className="py-2 px-4 text-left text-gray-400">Min</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(numerical).map(([colName, stats]) => (
+              <tr key={colName} className="border-b border-gray-700">
+                <td className="py-2 px-4 text-gray-200">{colName}</td>
+                <td className="py-2 px-4 text-gray-200">{stats.sum}</td>
+                <td className="py-2 px-4 text-gray-200">{stats.mean}</td>
+                <td className="py-2 px-4 text-gray-200">{stats.max}</td>
+                <td className="py-2 px-4 text-gray-200">{stats.min}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6">
-      <div className="container mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6 overflow-y-auto">
+      <div className="container mx-auto ">
         <h1 className="text-4xl font-bold mb-6 text-center text-white">InsightBot</h1>
 
         <div className="flex justify-center mb-6 space-x-4">
-          <button
-            type="button"
-            className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold py-2 px-4 rounded shadow hover:from-blue-600 hover:to-blue-800 transition duration-200"
-            onClick={() => handleAnalysis('salesData')}
-          >
-            Sales Data
-          </button>
-          <button
-            type="button"
-            className="bg-gradient-to-r from-green-500 to-green-700 text-white font-bold py-2 px-4 rounded shadow hover:from-green-600 hover:to-green-800 transition duration-200"
-            onClick={() => handleAnalysis('customerData')}
-          >
-            Customer Data
-          </button>
-          <button
-            type="button"
-            className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-white font-bold py-2 px-4 rounded shadow hover:from-yellow-600 hover:to-yellow-800 transition duration-200"
-            onClick={() => handleAnalysis('inventoryData')}
-          >
-            Inventory Data
-          </button>
-          <button
-            type="button"
-            className="bg-gradient-to-r from-purple-500 to-purple-700 text-white font-bold py-2 px-4 rounded shadow hover:from-purple-600 hover:to-purple-800 transition duration-200"
-            onClick={() => handleAnalysis('marketingCampaignsData')}
-          >
-            Marketing Data
-          </button>
-          <button
-            type="button"
-            className="bg-gradient-to-r from-teal-500 to-teal-700 text-white font-bold py-2 px-4 rounded shadow hover:from-teal-600 hover:to-teal-800 transition duration-200"
-            onClick={() => setShowQueryBot((prev) => !prev)} // Toggle QueryBot
-          >
+          <button type="button" className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold py-2 px-4 rounded shadow hover:from-blue-600 hover:to-blue-800 transition duration-200" onClick={() => handleAnalysis('salesData')}>Sales Data</button>
+          <button type="button" className="bg-gradient-to-r from-green-500 to-green-700 text-white font-bold py-2 px-4 rounded shadow hover:from-green-600 hover:to-green-800 transition duration-200" onClick={() => handleAnalysis('customerData')}>Customer Data</button>
+          <button type="button" className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-white font-bold py-2 px-4 rounded shadow hover:from-yellow-600 hover:to-yellow-800 transition duration-200" onClick={() => handleAnalysis('inventoryData')}>Inventory Data</button>
+          <button type="button" className="bg-gradient-to-r from-purple-500 to-purple-700 text-white font-bold py-2 px-4 rounded shadow hover:from-purple-600 hover:to-purple-800 transition duration-200" onClick={() => handleAnalysis('marketingCampaignsData')}>Marketing Data</button>
+          <button type="button" className="bg-gradient-to-r from-teal-500 to-teal-700 text-white font-bold py-2 px-4 rounded shadow hover:from-teal-600 hover:to-teal-800 transition duration-200" onClick={() => setShowQueryBot((prev) => !prev)}>
             {showQueryBot ? 'Hide Bot' : 'Bot'}
           </button>
         </div>
@@ -108,9 +142,7 @@ function InsightBot() {
                         <td className="py-2 px-4 text-gray-200">{colName}</td>
                         <td className="py-2 px-4 text-gray-200">{analysisResult.categorical[colName].unique_values}</td>
                         <td className="py-2 px-4 text-gray-200">{analysisResult.categorical[colName].most_common}</td>
-                        <td className="py-2 px-4 text-gray-200">
-                          {renderFrequencyButtons(analysisResult.categorical[colName].frequency)}
-                        </td>
+                        <td className="py-2 px-4 text-gray-200">{renderFrequencyButtons(analysisResult.categorical[colName].frequency)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -118,37 +150,17 @@ function InsightBot() {
               </div>
             )}
 
-            {analysisResult.numerical && Object.keys(analysisResult.numerical).length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2 text-gray-300">Numerical Data Analysis</h3>
-                <table className="min-w-full bg-gray-800 border border-gray-700">
-                  <thead>
-                    <tr>
-                      <th className="py-2 px-4 text-left text-gray-400">Column Name</th>
-                      <th className="py-2 px-4 text-left text-gray-400">Sum</th>
-                      <th className="py-2 px-4 text-left text-gray-400">Mean</th>
-                      <th className="py-2 px-4 text-left text-gray-400">Max</th>
-                      <th className="py-2 px-4 text-left text-gray-400">Min</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.keys(analysisResult.numerical).map((colName, idx) => (
-                      <tr key={idx} className="border-b border-gray-700">
-                        <td className="py-2 px-4 text-gray-200">{colName}</td>
-                        <td className="py-2 px-4 text-gray-200">{analysisResult.numerical[colName].sum}</td>
-                        <td className="py-2 px-4 text-gray-200">{analysisResult.numerical[colName].mean}</td>
-                        <td className="py-2 px-4 text-gray-200">{analysisResult.numerical[colName].max}</td>
-                        <td className="py-2 px-4 text-gray-200">{analysisResult.numerical[colName].min}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {renderNumericalAnalysis(analysisResult.numerical)}
+
+            {analysisResult.grouped_analysis && Object.keys(analysisResult.grouped_analysis).length > 0 && (
+              <>
+                {renderGroupedAnalysis(analysisResult.grouped_analysis)}
+              </>
             )}
           </div>
         )}
 
-        {showQueryBot && <QueryBot />} 
+        {showQueryBot && <QueryBot />}
       </div>
     </div>
   );

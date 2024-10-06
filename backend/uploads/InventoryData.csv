@@ -1,101 +1,101 @@
-Item ID,Product Name,Category,Subcategory,Supplier Name,Purchase Price,Selling Price,Stock Quantity,Stock Threshold,Reorder Status,Reorder Quantity,Date of Last Reorder,Lead Time (in days),Warehouse Location,Total Units Sold (YTD),Inventory Turnover Rate,Expiration Date (if applicable),Damaged/Returned Stock,Supplier Rating,Last Restock Date,Seasonality
-5006,Smartwatch X,Electronics,Wearables,TechPro Inc.,15.5,24.99,150,100,Yes,50,01-09-2022,7,"Section 3, Shelf B",1000,2.5,,0,4,15-08-2022,Yes
-5005,Smartwatch X5000,Electronics,Wearable Devices,TechPro Inc.,15.99,29.99,100,50,No,0,01-01-2022,7,"Shelf A, Section 2",500,2.5,,0,4,01-06-2022,No
-5006,Summer Shorts,Fashion,Men's Apparel,FashionForward Ltd.,9.99,19.99,200,100,No,0,01-03-2022,10,"Section 3, Row 2",1000,3,,5,5,01-09-2022,Yes
-5007,Premium Coffee Beans,Groceries,Beverages,GreenBean Co.,14.99,24.99,150,75,Yes,50,01-04-2022,5,"Section 1, Row 1",750,2,01-06-2023,2,4,01-10-2022,No
-5008,Wireless Charging Pad,Electronics,Accessories,TechPro Inc.,12.99,19.99,250,125,No,0,01-02-2022,8,"Shelf B, Section 3",1200,3.5,,1,4,01-07-2022,No
-5009,Fall Jacket,Fashion,Women's Apparel,FashionForward Ltd.,24.99,39.99,180,90,No,0,01-05-2022,9,"Section 2, Row 3",800,2.5,,3,5,01-11-2022,Yes
-5010,Organic Granola,Groceries,Breakfast Foods,GreenBean Co.,8.99,14.99,220,110,No,0,01-06-2022,6,"Section 1, Row 2",600,2.2,01-08-2023,4,4,01-12-2022,No
-RIT-00123,Smartwatch X500,Electronics,Wearable Devices,TechGenius Inc.,25.5,49.99,150,50,No,0,01-01-2022,7,"Shelf A, Section 2",5000,2.5,,5,4,01-06-2022,No
-RIT-00124,Organic Quinoa,Groceries,Grains,GreenEarth Foods,12.99,19.99,200,100,Yes,50,01-03-2022,10,"Section 3, Aisle 2",12000,1.2,15-02-2024,2,5,01-09-2022,Yes
-RIT-00125,Leather Wallet,Fashion,Accessories,LuxuryLeather Co.,30,69.99,100,25,No,0,01-02-2022,5,"Shelf B, Section 1",3000,2.1,,3,4,01-08-2022,No
-RIT-00126,Wireless Headphones,Electronics,Audio,SoundWave Inc.,50,99.99,50,20,Yes,20,01-04-2022,9,"Section 1, Aisle 3",8000,1.8,,4,5,01-11-2022,No
-RIT-00127,Fair Trade Coffee,Groceries,Beverages,GreenEarth Foods,15.99,24.99,300,150,No,0,01-05-2022,12,"Section 2, Aisle 1",18000,1.5,,1,5,01-10-2022,Yes
-RIT-00128,Running Shoes,Fashion,Footwear,FitWell Inc.,60,129.99,75,30,Yes,25,01-06-2022,8,"Shelf C, Section 3",12000,1.9,,2,4,01-12-2022,Yes
-RIT-00129,Smart Speaker,Electronics,Home Audio,TechGenius Inc.,80,149.99,25,10,Yes,10,01-07-2022,11,"Section 1, Aisle 2",8000,1.1,,3,5,01-01-2022,No
-20001,Smartwatch X5000,Electronics,Wearable Devices,TechGenius Inc.,15.5,29.99,150,100,No,0,15-01-2022,5,"Section 3, Shelf 2",2500,4.17,,5,4,01-06-2022,No
-I-0000012,Galaxy Note 22,Electronics,Smartphones,Samsung Electronics,599.99,799.99,150,100,No,50,01-01-2022,7,"Shelf B, Section 3",5000,4.5,,20,4,15-06-2023,No
-1001,Galaxy Watch,Electronics,Wearable Devices,Samsung Electronics,120,149.99,150,100,Yes,50,01-03-2023,7,"Shelf B, Section 3",1200,2.4,,10,4,01-06-2023,No
-1000001,Galaxy Watch,Electronics,Wearables,Samsung Electronics,150,200,500,300,No,0,01-01-2022,5,"Shelf A, Section 2",2000,2,,10,5,01-06-2022,No
-1000002,Nike Air Max,Fashion,Footwear,"Nike, Inc.",80,120,800,400,Yes,200,01-03-2022,7,"Shelf B, Section 3",1500,1.5,,20,4,01-09-2022,Yes
-10001,Smartwatch Luna,Electronics,Wearable Devices,TechCorp Inc.,15.99,49.99,500,300,Yes,200,15-03-2023,7,"Shelf B, Section 3",12000,2.4,,10,4,20-02-2023,No
-10001,Smart Speaker,Electronics,Smart Home Devices,TechMax,50,99.99,500,100,Yes,200,15-01-2022,5,"Shelf B, Section 3",1200,2.4,,0,4,10-06-2022,No
-10002,Women's Sandals,Fashion,Footwear,FashionForward,20,49.99,800,200,Yes,300,20-03-2022,3,"Shelf A, Section 1",1500,3.8,,10,5,15-09-2022,Yes
-10003,LED Desk Lamp,Home Goods,Lighting,HomeBright,30,69.99,300,50,No,0,,4,"Shelf C, Section 2",400,1.3,,5,3,25-01-2022,No
-10004,Fresh Berries,Groceries,Fresh Produce,FreshPick,15,29.99,600,150,Yes,200,10-02-2022,2,Refrigerated Section,800,2.7,25-12-2022,20,4,15-07-2022,Yes
-10005,Kids' Tablet,Electronics,Tablets,KidZone,40,89.99,400,100,Yes,150,15-04-2022,6,"Shelf D, Section 4",600,1.9,,15,5,20-10-2022,No
-10006,Sports Water Bottle,Home Goods,Outdoor & Sports,FitPro,25,49.99,500,200,Yes,200,10-05-2022,3,"Shelf E, Section 5",1000,3.2,,10,4,15-11-2022,No
-10007,Women's T-Shirt,Fashion,Apparel,FashionFrenzy,15,29.99,900,250,Yes,300,20-06-2022,2,"Shelf F, Section 6",1200,4,,20,5,10-12-2022,No
-1049,Smartwatch X3,Electronics,Wearable Devices,TechPro Inc.,12.5,19.99,150,50,No,0,01-01-2022,3,Shelf A,1200,2.5,,0,4,01-06-2022,No
-10001,Eco-Friendly Yoga Mat,Fitness,Yoga Accessories,GreenPlanet,50.99,69.99,250,100,No,0,15-01-2022,7,"Shelf 3, Section 1",1500,2.5,,0,4,01-06-2022,No
-10002,Smartwatch,Electronics,Wearables,TechHub,129.99,149.99,500,200,No,0,01-03-2022,10,"Shelf 2, Section 3",2000,3.2,,10,5,01-09-2022,No
-10003,Artisanal Soap Set,Home Goods,Bath and Body,SoapCraft,24.99,34.99,100,50,Yes,50,15-05-2022,5,"Shelf 1, Section 2",500,1.8,01-03-2024,5,4,01-11-2022,Yes
-10004,Coffee Maker,Home Appliances,Kitchen Electronics,AppliancePro,99.99,129.99,200,100,No,0,01-02-2022,8,"Shelf 4, Section 1",1500,2.1,,15,5,01-08-2022,No
-10005,Wireless Earbuds,Electronics,Audio Accessories,AudioWave,79.99,99.99,300,150,No,0,01-04-2022,9,"Shelf 3, Section 3",2500,3.5,,20,4,01-10-2022,No
-10006,Organic Quinoa,Groceries,Grains,FarmFresh,9.99,14.99,150,75,Yes,75,15-06-2022,6,"Shelf 2, Section 2",1000,1.9,01-02-2024,10,5,01-12-2022,Yes
-10007,Smart Thermostat,Home Appliances,Thermostats,HomeSmart,149.99,179.99,400,200,No,0,01-01-2022,11,"Shelf 4, Section 3",2000,2.8,,25,4,01-07-2022,No
-10001,EcoSmart LED Bulb,Electronics,Lighting,GreenTech Inc.,3.5,9.99,150,100,No,0,01-01-2022,5,"Shelf A, Section 2",5000,2.5,,0,4,01-06-2022,No
-10002,Premium Coffee Maker,Home Goods,Kitchen Appliances,KitchenPro Inc.,79.99,149.99,75,50,Yes,25,15-03-2022,10,Section 3,2000,1.2,,5,5,01-09-2022,Yes
-10003,Organic Avocado Oil,Groceries,Food and Beverages,GreenEarth Farms,14.99,24.99,200,150,No,0,01-02-2022,7,"Shelf B, Section 1",1000,1.5,01-06-2024,10,3,01-08-2022,Yes
-10004,Smart Speaker,Electronics,Audio and Music,TechWave Inc.,99.99,149.99,300,250,No,0,01-04-2022,3,Section 4,6000,2.8,,0,5,01-10-2022,No
-10005,Women's Fashion Watch,Fashion,Accessories,FashionForward Inc.,29.99,49.99,100,75,Yes,25,15-05-2022,12,"Shelf C, Section 3",3000,1.8,,15,4,01-11-2022,Yes
-10006,Kids' Educational Tablet,Electronics,Tablets and eReaders,LearnTech Inc.,149.99,199.99,50,25,Yes,25,01-06-2022,8,Section 5,1500,1.2,,20,5,01-12-2022,Yes
-10007,Fitness Tracker,Electronics,Wearables and Fitness,FitPro Inc.,99.99,129.99,200,150,No,0,01-07-2022,4,"Shelf D, Section 1",4000,2.5,,10,4,01-01-2022,No
-10008,Gourmet Food Basket,Groceries,Food and Beverages,GourmetGifts Inc.,49.99,99.99,150,100,No,0,01-08-2022,9,Section 6,2000,1.8,,0,5,01-02-2022,Yes
-10556,Galaxy Watch,Electronics,Wearables,Samsung Electronics,150,199.99,500,200,Yes,1000,15-02-2022,5,"Shelf A, Section 2",2000,4.2,,0,4,20-01-2022,No
-10557,Smart TV,Electronics,Televisions,LG Electronics,800,999.99,300,100,Yes,500,01-03-2022,10,"Section 3, Aisle 2",1500,3.5,,2,5,15-02-2022,Yes
-10558,Running Shoes,Fashion,Footwear,Nike Inc.,60,89.99,800,500,No,,,7,"Section 1, Aisle 1",4000,6.7,,5,4,10-01-2022,Yes
-10559,Coffee Maker,Home Goods,Kitchen Appliances,Breville Group,80,99.99,400,200,Yes,600,01-04-2022,3,"Section 2, Aisle 3",2000,5,,1,5,15-03-2022,No
-10560,Yoga Mat,Home Goods,Fitness Equipment,Yoga International,20,29.99,1200,800,No,,,2,"Section 1, Aisle 2",6000,10,,3,4,25-01-2022,Yes
-10561,Laptop Bag,Electronics,Accessories,The North Face,40,59.99,600,300,Yes,800,20-02-2022,4,"Section 3, Aisle 1",3000,7.5,,2,4,01-02-2022,No
-10562,Gaming Mouse,Electronics,Computer Peripherals,Razer Inc.,60,79.99,800,400,No,,,6,"Section 2, Aisle 2",4000,6.7,,4,5,15-01-2022,Yes
-1001,Wireless Earbuds,Electronics,Headphones,TechPro Inc.,50,99.99,200,50,No,0,01-01-2022,5,"Shelf A, Section 2",500,2.5,,10,4,01-02-2022,No
-1002,Summer Dress,Fashion,Women's Clothing,Fashionista Co.,20,49.99,150,75,Yes,50,01-06-2022,10,"Shelf B, Section 1",1000,4,,5,5,01-07-2022,Yes
-1003,Smartwatch,Electronics,Wearable Devices,TechPro Inc.,80,149.99,100,25,Yes,25,01-03-2022,7,"Shelf A, Section 3",200,1.5,,8,4,01-04-2022,No
-1004,Winter Jacket,Fashion,Men's Clothing,Fashionista Co.,30,69.99,80,40,No,0,01-01-2022,12,"Shelf B, Section 2",300,2,,6,5,01-02-2022,Yes
-1005,Laptop,Electronics,Computers,TechPro Inc.,600,999.99,50,10,Yes,20,01-05-2022,15,"Shelf A, Section 4",500,2,,10,4,01-06-2022,No
-1006,Summer Sandals,Fashion,Women's Shoes,Fashionista Co.,15,39.99,120,60,No,0,01-06-2022,9,"Shelf B, Section 3",800,4,,4,5,01-07-2022,Yes
-1007,Smart Speaker,Electronics,Home Audio,TechPro Inc.,70,129.99,90,30,Yes,20,01-04-2022,8,"Shelf A, Section 5",600,3.5,,8,4,01-05-2022,No
-10001,Smartwatch X1,Electronics,Wearable Devices,TechPro Inc.,12.99,19.99,500,300,No,0,15-01-2022,5,"Shelf B, Section 3",1500,2.5,,0,4,01-06-2022,No
-10002,Women's Casual Shoes,Fashion,Footwear,Fashionista Inc.,15.99,24.99,800,400,No,0,20-02-2022,7,"Shelf A, Section 2",2000,1.5,,10,3,15-03-2022,Yes
-10003,Laptop Charger,Electronics,Accessories,TechPro Inc.,6.99,9.99,1200,600,No,0,01-03-2022,3,"Shelf C, Section 1",1800,3,,5,5,10-04-2022,No
-10004,Gourmet Coffee,Groceries,Beverages,Foodie Delights Inc.,8.99,12.99,900,500,No,0,15-04-2022,10,"Shelf D, Section 4",1200,1.2,01-06-2024,20,2,01-05-2022,Yes
-10005,Home Fragrance Oil,Home Goods,Decor,Scentsational Inc.,4.99,6.99,1800,1000,No,0,20-05-2022,8,"Shelf E, Section 5",2500,2.8,,15,4,10-06-2022,No
-10006,Kids' Clothing,Fashion,Apparel,Fashionista Inc.,10.99,14.99,1000,500,No,0,15-06-2022,6,"Shelf A, Section 2",1500,1.5,,10,3,01-07-2022,Yes
-10007,Wireless Headphones,Electronics,Audio,TechPro Inc.,19.99,29.99,600,300,No,0,20-07-2022,4,"Shelf B, Section 3",1200,2,,5,5,01-08-2022,No
-10001,Smartwatch X5,Electronics,Wearable Devices,TechMax Inc.,25.99,49.99,500,200,No,0,01-01-2022,7,Section 3,1500,2.5,,0,4,01-06-2022,No
-10001,Smart Speaker Echo,Electronics,Smart Speakers,Acme Electronics,15.99,29.99,500,200,No,0,01-01-2022,3,"Shelf A, Section 2",1000,2.5,,0,4,01-06-2022,No
-10002,Running Shoes,Fashion,Running Shoes,Nike,80,120,300,100,Yes,150,15-02-2022,5,Section 3,500,1.2,,10,5,01-03-2022,Yes
-10003,Laptop,Electronics,Laptops,Dell,800,1200,100,50,Yes,50,15-01-2022,7,"Shelf B, Section 1",200,0.8,,20,4,01-02-2022,No
-10004,Gourmet Coffee,Groceries,Coffee,The Coffee Bean,5.99,9.99,200,100,No,0,01-03-2022,2,Section 2,1500,3,01-06-2024,5,5,01-04-2022,Yes
-10005,Smartwatch,Electronics,Smartwatches,Fitbit,150,250,150,75,Yes,75,20-01-2022,4,"Shelf A, Section 1",800,1.5,,15,4,01-03-2022,No
-10006,Hiking Boots,Fashion,Hiking Boots,The North Face,120,180,250,125,No,0,01-02-2022,6,Section 1,1200,2,,10,5,01-04-2022,Yes
-10007,Wireless Headphones,Electronics,Headphones,Sony,200,300,100,50,Yes,50,10-01-2022,8,"Shelf B, Section 2",600,1,,20,4,15-02-2022,No
-10001,Smart Speaker,Electronics,Home Audio,AudioTech Inc.,50,99.99,500,200,No,1000,01-01-2022,7,"Shelf B, Section 3",1000,2,,0,4,01-06-2022,No
-10002,Summer Dress,Fashion,Women's Apparel,FashionForward Ltd.,15,29.99,1500,500,Yes,2000,01-03-2022,10,"Shelf A, Section 1",800,4,,5,5,01-09-2022,Yes
-10003,Gaming Laptop,Electronics,Computers,TechPro Inc.,800,1500,200,100,Yes,300,01-05-2022,14,"Shelf C, Section 2",500,1.5,,10,3,01-11-2022,No
-10004,Winter Coat,Fashion,Men's Apparel,CoatCo Ltd.,40,69.99,800,300,No,1000,01-08-2022,12,"Shelf B, Section 1",600,3,,2,4,01-02-2022,Yes
-10005,Smartwatch,Electronics,Wearables,TechWear Inc.,100,149.99,1200,400,No,1500,01-04-2022,9,"Shelf A, Section 2",900,5,,8,5,01-07-2022,No
-R-001234,Smartwatch X3000,Electronics,Wearable Devices,TechPro Inc.,15.99,49.99,200,100,No,50,15-01-2022,7,"Shelf B, Section 3",1500,2.5,,0,4,01-02-2022,Yes
-10001,Xiaomi Smart Speaker,Electronics,Smart Home Devices,"Shenzhen Xiaomi Technology Co., Ltd.",15.99,24.99,500,100,No,0,01-01-2022,7,"Shelf B, Section 1",1500,2.5,,0,4,01-06-2022,No
-10000,Smart Speaker,Electronics,Home Automation,TechMax,120.5,149.99,500,200,No,0,15-01-2022,5,"Shelf A, Section 2",1500,2.5,,10,4,20-02-2022,No
-10001,Smartwatch X5,Electronics,Wearables,TechPro Inc.,25.99,39.99,120,50,No,0,15-01-2022,3,Shelf C,800,2.5,,5,4,01-06-2022,No
-10002,Organic Quinoa,Groceries,Grains,GreenEarth Foods,8.99,12.99,150,75,No,0,20-02-2022,5,Section 3,600,1.8,01-03-2024,2,5,15-09-2022,Yes
-10003,Laptop X1000,Electronics,Laptops,TechPro Inc.,599.99,799.99,80,30,Yes,20,25-03-2022,7,Shelf A,400,1.2,,10,4,01-10-2022,No
-10004,Fashion Handbag,Fashion,Handbags,StyleStar Inc.,49.99,69.99,100,50,No,0,10-04-2022,4,Section 2,700,2.2,,3,5,15-11-2022,Yes
-10005,Home Security Camera,Home Goods,Security,TechPro Inc.,99.99,149.99,120,60,No,0,01-05-2022,6,Shelf B,500,1.6,,4,4,01-12-2022,No
-10006,Smart Speaker,Electronics,Audio,TechPro Inc.,149.99,199.99,100,40,Yes,20,15-06-2022,5,Section 1,600,2.1,,6,5,01-01-2023,No
-10007,Gourmet Coffee,Groceries,Beverages,GreenEarth Foods,9.99,14.99,180,90,No,0,20-07-2022,4,Shelf D,800,2.3,01-04-2024,1,5,15-02-2023,Yes
-10008,LED TV,Electronics,TVs,TechPro Inc.,799.99,999.99,60,20,Yes,15,01-08-2022,8,Section 4,400,1.1,,12,4,01-03-2023,No
-RSP-001234,Smartwatch Gen 7,Electronics,Wearable Devices,TechCorp Inc.,15.5,29.99,150,50,No,0,15-01-2022,7,"Shelf A, Section 2",1200,2.5,,0,4,01-02-2022,No
-1001,Smartwatch X,Electronics,Wearable Devices,TechPro,50.99,99.99,100,20,Yes,50,01-01-2022,7,Shelf A,500,2.5,,0,4,01-06-2022,No
-RST-1234,Retractable Smart Pen,Office Supplies,Writing Instruments,SmartWrite Inc.,4.5,9.99,1200,800,No,0,01-01-2022,3,"Section 3, Shelf 5",15000,2.5,,0,4,15-06-2022,No
-10000,Galaxy Watch,Electronics,Wearable Devices,Samsung Electronics,50.99,99.99,150,100,No,0,15-01-2022,3,"Shelf A, Section 2",1200,2.4,,10,4,20-01-2022,No
-RS-0012345,Smart Speaker,Electronics,Home Audio,EchoStar,25.99,49.99,500,200,No,0,01-01-2022,3,"Shelf A, Section 2",1500,2.5,,10,4,01-02-2022,No
-10000,X500 Pro Gaming Monitor,Electronics,Monitors,TechMaster Inc.,550.99,749.99,150,50,No,0,15-01-2022,7,Shelf A Section 2,12000,2.4,,0,4,01-06-2022,No
-10001,Retina 5K Display Monitor,Electronics,Computer Monitors,TechPro Inc.,349.99,429.99,50,20,No,0,15-02-2022,5,"Shelf A, Section 2",1200,2.4,,0,4,10-02-2022,No
-10002,Men's Casual Shoes,Fashion,Men's Shoes,FashionForward Ltd.,29.99,49.99,100,50,No,0,01-03-2022,10,"Shelf B, Section 1",1500,3.6,,5,5,05-03-2022,Yes
-10003,Smart Speaker,Electronics,Smart Home Devices,EchoTech Inc.,99.99,149.99,200,100,No,0,15-04-2022,7,"Shelf C, Section 3",800,1.2,,10,4,10-04-2022,No
-10004,Women's Activewear,Fashion,Women's Clothing,FitPro Ltd.,39.99,59.99,150,75,No,0,01-05-2022,9,"Shelf D, Section 4",1200,2.5,,8,5,05-05-2022,Yes
-10005,Gaming Keyboard,Electronics,Computer Accessories,GamePro Inc.,199.99,249.99,300,150,No,0,15-06-2022,6,"Shelf E, Section 5",500,0.8,,15,4,10-06-2022,No
-10006,Kids' T-Shirt,Fashion,Children's Clothing,KidsLove Ltd.,14.99,24.99,250,125,No,0,01-07-2022,8,"Shelf F, Section 6",1000,2.2,,12,5,05-07-2022,Yes
+Item ID,Product Name,Category,Subcategory,Supplier Name,Purchase Price,Selling Price,Stock Quantity,Stock Threshold,Reorder Status,Lead Time (in days),Warehouse Location,Total Units Sold (YTD),Inventory Turnover Rate,Damaged/Returned Stock,Supplier Rating,Last Restock Date,Seasonality
+5006,Smartwatch X,Electronics,Wearables,TechPro Inc.,15.5,24.99,150,100,Yes,7,"Section 3, Shelf B",1000,2.5,0,4,15-08-2022,Yes
+5005,Smartwatch X5000,Electronics,Wearable Devices,TechPro Inc.,15.99,29.99,100,50,No,7,"Shelf A, Section 2",500,2.5,0,4,01-06-2022,No
+5006,Summer Shorts,Fashion,Men's Apparel,FashionForward Ltd.,9.99,19.99,200,100,No,10,"Section 3, Row 2",1000,3,5,5,01-09-2022,Yes
+5007,Premium Coffee Beans,Groceries,Beverages,GreenBean Co.,14.99,24.99,150,75,Yes,5,"Section 1, Row 1",750,2,2,4,01-10-2022,No
+5008,Wireless Charging Pad,Electronics,Accessories,TechPro Inc.,12.99,19.99,250,125,No,8,"Shelf B, Section 3",1200,3.5,1,4,01-07-2022,No
+5009,Fall Jacket,Fashion,Women's Apparel,FashionForward Ltd.,24.99,39.99,180,90,No,9,"Section 2, Row 3",800,2.5,3,5,01-11-2022,Yes
+5010,Organic Granola,Groceries,Breakfast Foods,GreenBean Co.,8.99,14.99,220,110,No,6,"Section 1, Row 2",600,2.2,4,4,01-12-2022,No
+RIT-00123,Smartwatch X500,Electronics,Wearable Devices,TechGenius Inc.,25.5,49.99,150,50,No,7,"Shelf A, Section 2",5000,2.5,5,4,01-06-2022,No
+RIT-00124,Organic Quinoa,Groceries,Grains,GreenEarth Foods,12.99,19.99,200,100,Yes,10,"Section 3, Aisle 2",12000,1.2,2,5,01-09-2022,Yes
+RIT-00125,Leather Wallet,Fashion,Accessories,LuxuryLeather Co.,30,69.99,100,25,No,5,"Shelf B, Section 1",3000,2.1,3,4,01-08-2022,No
+RIT-00126,Wireless Headphones,Electronics,Audio,SoundWave Inc.,50,99.99,50,20,Yes,9,"Section 1, Aisle 3",8000,1.8,4,5,01-11-2022,No
+RIT-00127,Fair Trade Coffee,Groceries,Beverages,GreenEarth Foods,15.99,24.99,300,150,No,12,"Section 2, Aisle 1",18000,1.5,1,5,01-10-2022,Yes
+RIT-00128,Running Shoes,Fashion,Footwear,FitWell Inc.,60,129.99,75,30,Yes,8,"Shelf C, Section 3",12000,1.9,2,4,01-12-2022,Yes
+RIT-00129,Smart Speaker,Electronics,Home Audio,TechGenius Inc.,80,149.99,25,10,Yes,11,"Section 1, Aisle 2",8000,1.1,3,5,01-01-2022,No
+20001,Smartwatch X5000,Electronics,Wearable Devices,TechGenius Inc.,15.5,29.99,150,100,No,5,"Section 3, Shelf 2",2500,4.17,5,4,01-06-2022,No
+I-0000012,Galaxy Note 22,Electronics,Smartphones,Samsung Electronics,599.99,799.99,150,100,No,7,"Shelf B, Section 3",5000,4.5,20,4,15-06-2023,No
+1001,Galaxy Watch,Electronics,Wearable Devices,Samsung Electronics,120,149.99,150,100,Yes,7,"Shelf B, Section 3",1200,2.4,10,4,01-06-2023,No
+1000001,Galaxy Watch,Electronics,Wearables,Samsung Electronics,150,200,500,300,No,5,"Shelf A, Section 2",2000,2,10,5,01-06-2022,No
+1000002,Nike Air Max,Fashion,Footwear,"Nike, Inc.",80,120,800,400,Yes,7,"Shelf B, Section 3",1500,1.5,20,4,01-09-2022,Yes
+10001,Smartwatch Luna,Electronics,Wearable Devices,TechCorp Inc.,15.99,49.99,500,300,Yes,7,"Shelf B, Section 3",12000,2.4,10,4,20-02-2023,No
+10001,Smart Speaker,Electronics,Smart Home Devices,TechMax,50,99.99,500,100,Yes,5,"Shelf B, Section 3",1200,2.4,0,4,10-06-2022,No
+10002,Women's Sandals,Fashion,Footwear,FashionForward,20,49.99,800,200,Yes,3,"Shelf A, Section 1",1500,3.8,10,5,15-09-2022,Yes
+10003,LED Desk Lamp,Home Goods,Lighting,HomeBright,30,69.99,300,50,No,4,"Shelf C, Section 2",400,1.3,5,3,25-01-2022,No
+10004,Fresh Berries,Groceries,Fresh Produce,FreshPick,15,29.99,600,150,Yes,2,Refrigerated Section,800,2.7,20,4,15-07-2022,Yes
+10005,Kids' Tablet,Electronics,Tablets,KidZone,40,89.99,400,100,Yes,6,"Shelf D, Section 4",600,1.9,15,5,20-10-2022,No
+10006,Sports Water Bottle,Home Goods,Outdoor & Sports,FitPro,25,49.99,500,200,Yes,3,"Shelf E, Section 5",1000,3.2,10,4,15-11-2022,No
+10007,Women's T-Shirt,Fashion,Apparel,FashionFrenzy,15,29.99,900,250,Yes,2,"Shelf F, Section 6",1200,4,20,5,10-12-2022,No
+1049,Smartwatch X3,Electronics,Wearable Devices,TechPro Inc.,12.5,19.99,150,50,No,3,Shelf A,1200,2.5,0,4,01-06-2022,No
+10001,Eco-Friendly Yoga Mat,Fitness,Yoga Accessories,GreenPlanet,50.99,69.99,250,100,No,7,"Shelf 3, Section 1",1500,2.5,0,4,01-06-2022,No
+10002,Smartwatch,Electronics,Wearables,TechHub,129.99,149.99,500,200,No,10,"Shelf 2, Section 3",2000,3.2,10,5,01-09-2022,No
+10003,Artisanal Soap Set,Home Goods,Bath and Body,SoapCraft,24.99,34.99,100,50,Yes,5,"Shelf 1, Section 2",500,1.8,5,4,01-11-2022,Yes
+10004,Coffee Maker,Home Appliances,Kitchen Electronics,AppliancePro,99.99,129.99,200,100,No,8,"Shelf 4, Section 1",1500,2.1,15,5,01-08-2022,No
+10005,Wireless Earbuds,Electronics,Audio Accessories,AudioWave,79.99,99.99,300,150,No,9,"Shelf 3, Section 3",2500,3.5,20,4,01-10-2022,No
+10006,Organic Quinoa,Groceries,Grains,FarmFresh,9.99,14.99,150,75,Yes,6,"Shelf 2, Section 2",1000,1.9,10,5,01-12-2022,Yes
+10007,Smart Thermostat,Home Appliances,Thermostats,HomeSmart,149.99,179.99,400,200,No,11,"Shelf 4, Section 3",2000,2.8,25,4,01-07-2022,No
+10001,EcoSmart LED Bulb,Electronics,Lighting,GreenTech Inc.,3.5,9.99,150,100,No,5,"Shelf A, Section 2",5000,2.5,0,4,01-06-2022,No
+10002,Premium Coffee Maker,Home Goods,Kitchen Appliances,KitchenPro Inc.,79.99,149.99,75,50,Yes,10,Section 3,2000,1.2,5,5,01-09-2022,Yes
+10003,Organic Avocado Oil,Groceries,Food and Beverages,GreenEarth Farms,14.99,24.99,200,150,No,7,"Shelf B, Section 1",1000,1.5,10,3,01-08-2022,Yes
+10004,Smart Speaker,Electronics,Audio and Music,TechWave Inc.,99.99,149.99,300,250,No,3,Section 4,6000,2.8,0,5,01-10-2022,No
+10005,Women's Fashion Watch,Fashion,Accessories,FashionForward Inc.,29.99,49.99,100,75,Yes,12,"Shelf C, Section 3",3000,1.8,15,4,01-11-2022,Yes
+10006,Kids' Educational Tablet,Electronics,Tablets and eReaders,LearnTech Inc.,149.99,199.99,50,25,Yes,8,Section 5,1500,1.2,20,5,01-12-2022,Yes
+10007,Fitness Tracker,Electronics,Wearables and Fitness,FitPro Inc.,99.99,129.99,200,150,No,4,"Shelf D, Section 1",4000,2.5,10,4,01-01-2022,No
+10008,Gourmet Food Basket,Groceries,Food and Beverages,GourmetGifts Inc.,49.99,99.99,150,100,No,9,Section 6,2000,1.8,0,5,01-02-2022,Yes
+10556,Galaxy Watch,Electronics,Wearables,Samsung Electronics,150,199.99,500,200,Yes,5,"Shelf A, Section 2",2000,4.2,0,4,20-01-2022,No
+10557,Smart TV,Electronics,Televisions,LG Electronics,800,999.99,300,100,Yes,10,"Section 3, Aisle 2",1500,3.5,2,5,15-02-2022,Yes
+10558,Running Shoes,Fashion,Footwear,Nike Inc.,60,89.99,800,500,No,7,"Section 1, Aisle 1",4000,6.7,5,4,10-01-2022,Yes
+10559,Coffee Maker,Home Goods,Kitchen Appliances,Breville Group,80,99.99,400,200,Yes,3,"Section 2, Aisle 3",2000,5,1,5,15-03-2022,No
+10560,Yoga Mat,Home Goods,Fitness Equipment,Yoga International,20,29.99,1200,800,No,2,"Section 1, Aisle 2",6000,10,3,4,25-01-2022,Yes
+10561,Laptop Bag,Electronics,Accessories,The North Face,40,59.99,600,300,Yes,4,"Section 3, Aisle 1",3000,7.5,2,4,01-02-2022,No
+10562,Gaming Mouse,Electronics,Computer Peripherals,Razer Inc.,60,79.99,800,400,No,6,"Section 2, Aisle 2",4000,6.7,4,5,15-01-2022,Yes
+1001,Wireless Earbuds,Electronics,Headphones,TechPro Inc.,50,99.99,200,50,No,5,"Shelf A, Section 2",500,2.5,10,4,01-02-2022,No
+1002,Summer Dress,Fashion,Women's Clothing,Fashionista Co.,20,49.99,150,75,Yes,10,"Shelf B, Section 1",1000,4,5,5,01-07-2022,Yes
+1003,Smartwatch,Electronics,Wearable Devices,TechPro Inc.,80,149.99,100,25,Yes,7,"Shelf A, Section 3",200,1.5,8,4,01-04-2022,No
+1004,Winter Jacket,Fashion,Men's Clothing,Fashionista Co.,30,69.99,80,40,No,12,"Shelf B, Section 2",300,2,6,5,01-02-2022,Yes
+1005,Laptop,Electronics,Computers,TechPro Inc.,600,999.99,50,10,Yes,15,"Shelf A, Section 4",500,2,10,4,01-06-2022,No
+1006,Summer Sandals,Fashion,Women's Shoes,Fashionista Co.,15,39.99,120,60,No,9,"Shelf B, Section 3",800,4,4,5,01-07-2022,Yes
+1007,Smart Speaker,Electronics,Home Audio,TechPro Inc.,70,129.99,90,30,Yes,8,"Shelf A, Section 5",600,3.5,8,4,01-05-2022,No
+10001,Smartwatch X1,Electronics,Wearable Devices,TechPro Inc.,12.99,19.99,500,300,No,5,"Shelf B, Section 3",1500,2.5,0,4,01-06-2022,No
+10002,Women's Casual Shoes,Fashion,Footwear,Fashionista Inc.,15.99,24.99,800,400,No,7,"Shelf A, Section 2",2000,1.5,10,3,15-03-2022,Yes
+10003,Laptop Charger,Electronics,Accessories,TechPro Inc.,6.99,9.99,1200,600,No,3,"Shelf C, Section 1",1800,3,5,5,10-04-2022,No
+10004,Gourmet Coffee,Groceries,Beverages,Foodie Delights Inc.,8.99,12.99,900,500,No,10,"Shelf D, Section 4",1200,1.2,20,2,01-05-2022,Yes
+10005,Home Fragrance Oil,Home Goods,Decor,Scentsational Inc.,4.99,6.99,1800,1000,No,8,"Shelf E, Section 5",2500,2.8,15,4,10-06-2022,No
+10006,Kids' Clothing,Fashion,Apparel,Fashionista Inc.,10.99,14.99,1000,500,No,6,"Shelf A, Section 2",1500,1.5,10,3,01-07-2022,Yes
+10007,Wireless Headphones,Electronics,Audio,TechPro Inc.,19.99,29.99,600,300,No,4,"Shelf B, Section 3",1200,2,5,5,01-08-2022,No
+10001,Smartwatch X5,Electronics,Wearable Devices,TechMax Inc.,25.99,49.99,500,200,No,7,Section 3,1500,2.5,0,4,01-06-2022,No
+10001,Smart Speaker Echo,Electronics,Smart Speakers,Acme Electronics,15.99,29.99,500,200,No,3,"Shelf A, Section 2",1000,2.5,0,4,01-06-2022,No
+10002,Running Shoes,Fashion,Running Shoes,Nike,80,120,300,100,Yes,5,Section 3,500,1.2,10,5,01-03-2022,Yes
+10003,Laptop,Electronics,Laptops,Dell,800,1200,100,50,Yes,7,"Shelf B, Section 1",200,0.8,20,4,01-02-2022,No
+10004,Gourmet Coffee,Groceries,Coffee,The Coffee Bean,5.99,9.99,200,100,No,2,Section 2,1500,3,5,5,01-04-2022,Yes
+10005,Smartwatch,Electronics,Smartwatches,Fitbit,150,250,150,75,Yes,4,"Shelf A, Section 1",800,1.5,15,4,01-03-2022,No
+10006,Hiking Boots,Fashion,Hiking Boots,The North Face,120,180,250,125,No,6,Section 1,1200,2,10,5,01-04-2022,Yes
+10007,Wireless Headphones,Electronics,Headphones,Sony,200,300,100,50,Yes,8,"Shelf B, Section 2",600,1,20,4,15-02-2022,No
+10001,Smart Speaker,Electronics,Home Audio,AudioTech Inc.,50,99.99,500,200,No,7,"Shelf B, Section 3",1000,2,0,4,01-06-2022,No
+10002,Summer Dress,Fashion,Women's Apparel,FashionForward Ltd.,15,29.99,1500,500,Yes,10,"Shelf A, Section 1",800,4,5,5,01-09-2022,Yes
+10003,Gaming Laptop,Electronics,Computers,TechPro Inc.,800,1500,200,100,Yes,14,"Shelf C, Section 2",500,1.5,10,3,01-11-2022,No
+10004,Winter Coat,Fashion,Men's Apparel,CoatCo Ltd.,40,69.99,800,300,No,12,"Shelf B, Section 1",600,3,2,4,01-02-2022,Yes
+10005,Smartwatch,Electronics,Wearables,TechWear Inc.,100,149.99,1200,400,No,9,"Shelf A, Section 2",900,5,8,5,01-07-2022,No
+R-001234,Smartwatch X3000,Electronics,Wearable Devices,TechPro Inc.,15.99,49.99,200,100,No,7,"Shelf B, Section 3",1500,2.5,0,4,01-02-2022,Yes
+10001,Xiaomi Smart Speaker,Electronics,Smart Home Devices,"Shenzhen Xiaomi Technology Co., Ltd.",15.99,24.99,500,100,No,7,"Shelf B, Section 1",1500,2.5,0,4,01-06-2022,No
+10000,Smart Speaker,Electronics,Home Automation,TechMax,120.5,149.99,500,200,No,5,"Shelf A, Section 2",1500,2.5,10,4,20-02-2022,No
+10001,Smartwatch X5,Electronics,Wearables,TechPro Inc.,25.99,39.99,120,50,No,3,Shelf C,800,2.5,5,4,01-06-2022,No
+10002,Organic Quinoa,Groceries,Grains,GreenEarth Foods,8.99,12.99,150,75,No,5,Section 3,600,1.8,2,5,15-09-2022,Yes
+10003,Laptop X1000,Electronics,Laptops,TechPro Inc.,599.99,799.99,80,30,Yes,7,Shelf A,400,1.2,10,4,01-10-2022,No
+10004,Fashion Handbag,Fashion,Handbags,StyleStar Inc.,49.99,69.99,100,50,No,4,Section 2,700,2.2,3,5,15-11-2022,Yes
+10005,Home Security Camera,Home Goods,Security,TechPro Inc.,99.99,149.99,120,60,No,6,Shelf B,500,1.6,4,4,01-12-2022,No
+10006,Smart Speaker,Electronics,Audio,TechPro Inc.,149.99,199.99,100,40,Yes,5,Section 1,600,2.1,6,5,01-01-2023,No
+10007,Gourmet Coffee,Groceries,Beverages,GreenEarth Foods,9.99,14.99,180,90,No,4,Shelf D,800,2.3,1,5,15-02-2023,Yes
+10008,LED TV,Electronics,TVs,TechPro Inc.,799.99,999.99,60,20,Yes,8,Section 4,400,1.1,12,4,01-03-2023,No
+RSP-001234,Smartwatch Gen 7,Electronics,Wearable Devices,TechCorp Inc.,15.5,29.99,150,50,No,7,"Shelf A, Section 2",1200,2.5,0,4,01-02-2022,No
+1001,Smartwatch X,Electronics,Wearable Devices,TechPro,50.99,99.99,100,20,Yes,7,Shelf A,500,2.5,0,4,01-06-2022,No
+RST-1234,Retractable Smart Pen,Office Supplies,Writing Instruments,SmartWrite Inc.,4.5,9.99,1200,800,No,3,"Section 3, Shelf 5",15000,2.5,0,4,15-06-2022,No
+10000,Galaxy Watch,Electronics,Wearable Devices,Samsung Electronics,50.99,99.99,150,100,No,3,"Shelf A, Section 2",1200,2.4,10,4,20-01-2022,No
+RS-0012345,Smart Speaker,Electronics,Home Audio,EchoStar,25.99,49.99,500,200,No,3,"Shelf A, Section 2",1500,2.5,10,4,01-02-2022,No
+10000,X500 Pro Gaming Monitor,Electronics,Monitors,TechMaster Inc.,550.99,749.99,150,50,No,7,Shelf A Section 2,12000,2.4,0,4,01-06-2022,No
+10001,Retina 5K Display Monitor,Electronics,Computer Monitors,TechPro Inc.,349.99,429.99,50,20,No,5,"Shelf A, Section 2",1200,2.4,0,4,10-02-2022,No
+10002,Men's Casual Shoes,Fashion,Men's Shoes,FashionForward Ltd.,29.99,49.99,100,50,No,10,"Shelf B, Section 1",1500,3.6,5,5,05-03-2022,Yes
+10003,Smart Speaker,Electronics,Smart Home Devices,EchoTech Inc.,99.99,149.99,200,100,No,7,"Shelf C, Section 3",800,1.2,10,4,10-04-2022,No
+10004,Women's Activewear,Fashion,Women's Clothing,FitPro Ltd.,39.99,59.99,150,75,No,9,"Shelf D, Section 4",1200,2.5,8,5,05-05-2022,Yes
+10005,Gaming Keyboard,Electronics,Computer Accessories,GamePro Inc.,199.99,249.99,300,150,No,6,"Shelf E, Section 5",500,0.8,15,4,10-06-2022,No
+10006,Kids' T-Shirt,Fashion,Children's Clothing,KidsLove Ltd.,14.99,24.99,250,125,No,8,"Shelf F, Section 6",1000,2.2,12,5,05-07-2022,Yes

@@ -42,13 +42,10 @@ def analyze_csv(data):
     return summary
 
 # Route to upload business data
+# Route to upload business data (only saving files, no processing)
 @app.route('/api/upload-business-data', methods=['POST'])
 def upload_business_data():
-    global last_uploaded_data_summary
     try:
-        business_name = request.form.get("businessName")
-        industry = request.form.get("industry")
-
         # Store uploaded files in a dictionary
         uploaded_files = {
             'salesData': request.files.get('salesData'),
@@ -57,12 +54,42 @@ def upload_business_data():
             'marketingCampaignsData': request.files.get('marketingCampaignsData')
         }
 
-        file_summaries = {}
+        file_paths = {}
         for file_key, file in uploaded_files.items():
             if file:
                 file_extension = file.filename.split('.')[-1]
                 file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-                file.save(file_path)  # Save the file
+
+                # Save the file to the specified directory
+                file.save(file_path)
+
+                # Store the saved file path for future reference
+                file_paths[file_key] = file_path
+
+        # Respond with success message and file paths
+        return jsonify({"message": "Files uploaded successfully!", "file_paths": file_paths}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+# Route to process saved files and store data in ChromaDB when the virtual consultant page is accessed
+@app.route('/process-and-store-data', methods=['GET'])
+def process_and_store_data():
+    try:
+        # Map file types to their saved file paths
+        file_mapping = {
+            'salesData': 'uploads/SalesData.csv',
+            'customerData': 'uploads/CustomerData.csv',
+            'inventoryData': 'uploads/InventoryData.csv',
+            'marketingCampaignsData': 'uploads/MarketingData.csv'
+        }
+
+        file_summaries = {}
+
+        # Process each saved file
+        for file_key, file_path in file_mapping.items():
+            if os.path.exists(file_path):
+                file_extension = file_path.split('.')[-1]
 
                 # Process based on file type
                 if file_extension == "csv":
@@ -81,20 +108,20 @@ def upload_business_data():
                 # Store summary for each file
                 file_summaries[file_key] = summary
 
-                # Add data to ChromaDB
+                # Add data to ChromaDB (only if it's a DataFrame)
                 if isinstance(data, pd.DataFrame):
                     data = data.to_dict(orient='records')
 
                 for i, row in enumerate(data):
-                    insight_id = f"{business_name}_{file_key}_{i}"
+                    insight_id = f"{file_key}_{i}"
                     insight_text = json.dumps(row)
                     insight_collection.add(ids=[insight_id], documents=[insight_text])
 
-        last_uploaded_data_summary = file_summaries
-        return jsonify({"message": "Files uploaded and data added successfully!", "summary": file_summaries}), 200
+        return jsonify({"message": "Data processed and added to ChromaDB!", "summary": file_summaries}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 
 # Route to search for insights
@@ -161,17 +188,46 @@ def consultant_query():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     
-# Helper function to classify columns by data type
+# Function to classify columns into numeric and categorical
 def classify_columns(df):
     numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
     categorical_columns = df.select_dtypes(exclude=[np.number, np.datetime64]).columns.tolist()
     return numeric_columns, categorical_columns
+
+def analyze_numerical_by_categorical(df):
+    """Analyze numerical columns grouped by categorical values, ignoring numeric columns that contain 'ID' or 'Date'."""
+    # Classify columns into numeric and categorical
+    numeric_columns, categorical_columns = classify_columns(df)
+    
+    # Filter out numeric columns containing 'ID' or 'Date'
+    numeric_columns = [col for col in numeric_columns if 'ID' not in col and 'Date' not in col]
+    
+    analysis_result = {}
+    
+    # For each categorical column, group by and calculate statistics for numeric columns
+    for cat_col in categorical_columns:
+        # Check if the categorical column contains 'ID' or 'Date'
+        if 'ID' in cat_col or 'Date' in cat_col:
+            continue  # Skip this column
+
+        # Group by the categorical column and aggregate statistics
+        grouped = df.groupby(cat_col)[numeric_columns].agg(['min', 'max', 'mean', 'sum'])
+        
+        # Flatten the MultiIndex columns for easier JSON serialization
+        grouped.columns = ['_'.join(map(str, col)).strip() for col in grouped.columns.values]
+        
+        # Convert the DataFrame to a dictionary
+        analysis_result[cat_col] = grouped.reset_index().to_dict(orient='records')
+
+    return analysis_result
+
 
 @app.route('/api/analyze-data', methods=['POST'])
 def analyze_data():
     global last_analysis_summary  # Keep track of the last analysis summary
     try:
         data_type = request.json.get('dataType')  # Get the type of data (sales, customer, etc.)
+        
         
         # Use the appropriate file based on data type
         file_mapping = {
@@ -189,13 +245,15 @@ def analyze_data():
         # Read CSV into DataFrame
         df = pd.read_csv(data_file)
         
+        
         # Classify columns into numeric and categorical
         numeric_columns, categorical_columns = classify_columns(df)
         
         # Create a response dict to hold analysis results
         analysis_result = {
             "categorical": {},
-            "numerical": {}
+            "numerical": {},
+            "grouped_analysis": {}  # New section to hold grouped analysis
         }
 
         # Analyze categorical columns
@@ -215,16 +273,61 @@ def analyze_data():
                 'min': float(df[col].min())  
             }
 
-        # Store the analysis summary in ChromaDB
         analysis_id = f"analysis_{data_type}"
         analysis_text = json.dumps(analysis_result)
         analysis_collection.add(ids=[analysis_id], documents=[analysis_text])
 
+        # Perform analysis on numerical columns grouped by categorical values
+        grouped_analysis_result = analyze_numerical_by_categorical(df)
+        
+        analysis_result["grouped_analysis"] = grouped_analysis_result  # Add grouped analysis to the result
+        # Store the analysis summary in ChromaDB
+        
+       
         last_analysis_summary = analysis_result
+    
         return jsonify(analysis_result), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/grouped-analysis', methods=['POST'])  # Change to POST
+def get_grouped_analysis():
+    try:
+        data_type = request.json.get('dataType') 
+        print(data_type)  # Get the type of data (sales, customer, etc.)
+        
+        # Use the appropriate file based on data type
+        file_mapping = {
+            'salesData': 'uploads/SalesData.csv',
+            'customerData': 'uploads/CustomerData.csv',
+            'inventoryData': 'uploads/InventoryData.csv',
+            'marketingCampaignsData': 'uploads/MarketingData.csv'
+        }
+        
+        data_file = file_mapping.get(data_type)
+        
+        if not data_file or not os.path.exists(data_file):
+            return jsonify({"error": "File not found or invalid data type"}), 400
+        
+        # Read CSV into DataFrame
+        df = pd.read_csv(data_file)
+        
+        # Create a response dict to hold analysis results
+        analysis_result = {
+            "grouped_analysis": {}  # New section to hold grouped analysis
+        }
+
+        # Perform analysis on numerical columns grouped by categorical values
+        grouped_analysis_result = analyze_numerical_by_categorical(df)
+        
+        analysis_result["grouped_analysis"] = grouped_analysis_result  # Add grouped analysis to the result
+        
+        return jsonify(analysis_result), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/query-analysis', methods=['POST'])
 def query_analysis():
@@ -233,7 +336,7 @@ def query_analysis():
         query = request.json.get("query")
         
         # Search the analysis results collection
-        results = analysis_collection.query(query_texts=[query], n_results=20)
+        results = analysis_collection.query(query_texts=[query], n_results=1)
         print(results)
 
         documents = results["documents"][0]
@@ -279,6 +382,8 @@ def query_analysis():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
+
 
 
 # Start the Flask app
