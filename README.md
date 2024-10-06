@@ -35,3 +35,14 @@ graph TD;
     B --> C[User Interaction]
     C --> D[Continuous Learning]
     D --> B
+```
+
+## 📈 Key Performance Indicators (KPIs)
+
+| KPI                          | Description                                               | Current Value | Target Value |
+|------------------------------|----------------------------------------------------------|---------------|--------------|
+| Revenue Growth Rate          | Measures the percentage increase in revenue              | 15%           | 25%          |
+| Customer Satisfaction Score   | Evaluates customer feedback and satisfaction              | 85%           | 90%          |
+| Decision Accuracy Rate        | Percentage of correct decisions made by the system       | 80%           | 95%          |
+| Average Response Time         | Time taken by the AI-Bot to respond to user queries     | 2 seconds     | 1 second     |
+
