@@ -1,82 +1,37 @@
 # DecisivAI - A RAG-based Decision-Making System
 
-**DecisivAI** is a cutting-edge platform designed to empower businesses with data-driven insights and AI-powered decision-making tools. Our system leverages Retrieval-Augmented Generation (RAG) and advanced LLMs to provide comprehensive decision support, real-world scenario simulations, and detailed insight analysis.
+**DecisivAI** is an intelligent decision-support platform that equips businesses and enterprises with AI-powered tools for making informed decisions. Our system integrates **Retrieval-Augmented Generation (RAG)** techniques with **Large Language Models (LLMs)** to provide a holistic solution, enabling real-time insights, scenario simulations, and precise data visualization. By leveraging company-specific data and continuous learning mechanisms, DecisivAI becomes a reliable virtual consultant.
 
 ---
 
 ## 🌟 Project Overview
 
-DecisivAI is a Virtual Consultant that:
+The main components of **DecisivAI** include:
 
-- **Enhances Business Decisions**: Utilizes company-specific data and industry trends for informed decision-making.
-- **Delivers Actionable Insights**: Provides AI-driven insights based on natural language conversations and user queries.
-- **Simulates Real-World Scenarios**: Offers future business decision simulations with continuous learning from user interactions.
-- **Visualizes Data**: Integrates Explainable AI layers and advanced data visualization to provide clarity on decision processes.
+- **Enhanced Business Decisions**: Uses enterprise-specific data and industry trends for precision in decision-making.
+- **Actionable Insights**: Provides answers to user queries and offers comprehensive AI-driven insights using natural language processing (NLP).
+- **Scenario Simulations**: Predicts potential outcomes by simulating real-world business scenarios based on data and user inputs.
+- **Visual Data Representation**: Utilizes explainable AI layers to offer clear, interactive visualizations of decision paths, metrics, and projections.
 
 ---
 
 ## 🛠️ System Components
 
-### 🔮 Virtual Consultant
-A comprehensive consultant built using:
-- **VectorDB** for storing company data and industry trends.
-- **RAG & LangChain** to train a BERT-based LLM model tailored to business-specific needs.
-
-### 🎯 Informed Decisions
-- **Key-Performance Indicator (KPI) Analysis**: Continuously evaluates business metrics to support data-driven decisions.
-- **Model Tuning**: Refines model performance over time based on historical data and user feedback.
-
-### 🤖 AI-Bot
-- Provides natural language answers to business-related questions.
-- Uses **Conversational AI** for long-term strategies and milestone planning.
-  
-### 🧠 Scenario Simulation
-- Simulates future business decisions using **LLMs** and real-time data.
-- Integrates a **Feedback Loop** to enhance model learning and decision accuracy.
-
-### 📊 Data Visualization
-- **Explainable AI (XAI)** layer visualizes how decisions are made.
-- Utilizes **Plotly** and **Streamlit** to provide rich, interactive charts and graphs that support business decisions.
-
-### 🔍 Insight Analysis
-- Uses **Cosine Similarity** and **User Surveys** to provide detailed analysis of AI-generated insights.
-- Performs **A/B Testing** and monitors response times to optimize system performance.
+| Component               | Description                                                                 |
+|-------------------------|-----------------------------------------------------------------------------|
+| 🔮 **Virtual Consultant**| Uses **VectorDB** and **BERT-based LLM** for decision support and data trends.|
+| 🎯 **Informed Decisions**| Continuously analyzes KPIs and performs model tuning based on feedback.      |
+| 🤖 **AI-Bot**            | Provides conversational AI answers for long-term strategies and planning.    |
+| 🧠 **Scenario Simulation**| Simulates business scenarios using LLMs and real-time data.                  |
+| 📊 **Data Visualization**| Rich, interactive charts and graphs using **Recharts** and **Streamlit**.     |
 
 ---
 
-## 🚀 How It Works
+## 📊 Workflow Diagram
 
-1. **Data Ingestion**: Company-specific data is uploaded and stored in a **VectorDB**.
-2. **Training**: A **BERT-based LLM** is trained using **LangChain** and RAG techniques.
-3. **User Interaction**: Users interact with the AI through natural language queries to receive data-driven decisions.
-4. **Feedback Loop**: Continuous feedback is collected to refine the model and enhance decision-making accuracy.
-
----
-
-## 🧑‍💻 Tech Stack
-
-- **Backend**: Python (Flask), LangChain, BERT, RAG, VectorDB
-- **Frontend**: React, Streamlit, Plotly
-- **Database**: VectorDB
-- **Data Visualization**: Plotly, Streamlit
-- **AI/ML**: BERT, LLMs, Explainable AI
-
----
-
-## 📈 Use Cases
-
-- **Strategic Business Planning**: Helps organizations simulate long-term strategies and plan key milestones.
-- **KPI Monitoring**: Continuously evaluates performance indicators to guide decision-making.
-- **Insight Generation**: Provides personalized, data-driven insights for optimizing business operations.
-
----
-
-## 🎯 Future Enhancements
-
-- **Advanced Feedback Mechanism**: Enhance the feedback loop to further improve the model’s decision accuracy.
-- **Expanded Data Sources**: Integrate additional data sources and real-time analytics.
-- **Enhanced Visualization**: Implement more advanced visualization techniques for deeper insights.
-
----
-
-
+```mermaid
+graph TD;
+    A[Data Ingestion] --> B[Model Training]
+    B --> C[User Interaction]
+    C --> D[Continuous Learning]
+    D --> B
