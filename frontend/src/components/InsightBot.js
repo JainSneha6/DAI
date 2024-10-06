@@ -43,36 +43,67 @@ function InsightBot() {
     );
   };
 
-  // Function to render grouped numerical analysis
-  const renderGroupedAnalysis = (groupedAnalysis) => {
-    return Object.entries(groupedAnalysis).map(([category, data]) => (
-      <div key={category} className="mb-6">
-        <h3 className="text-2xl font-bold mb-2 text-gray-300">{category} Analysis</h3>
-        <table className="min-w-full bg-gray-800 border border-gray-700">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 text-left text-gray-400">Details</th>
-              {data[0] && Object.keys(data[0]).map((key) => (
-                <th key={key} className="py-2 px-4 text-left text-gray-400">{key}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row, idx) => (
-              <tr key={idx} className="border-b border-gray-700">
-                <td className="py-2 px-4 text-gray-200">{row[category]}</td>
-                {Object.entries(row).map(([key, value]) => (
-                  key !== category && (
-                    <td key={key} className="py-2 px-4 text-gray-200">{value}</td>
-                  )
-                ))}
-              </tr>
+  const [selectedGroupedDataset, setSelectedGroupedDataset] = useState('');
+
+const renderGroupedDatasetDropdown = (datasets, setSelectedDataset) => {
+    return (
+        <select
+            className="mb-4 bg-gray-700 text-white p-2 rounded"
+            onChange={(e) => setSelectedDataset(e.target.value)}
+            defaultValue=""
+        >
+            <option value="" disabled>Select Grouped Field</option>
+            {datasets.map((dataset, idx) => (
+                <option key={idx} value={dataset}>{dataset}</option>
             ))}
-          </tbody>
-        </table>
-      </div>
-    ));
-  };
+        </select>
+    );
+};
+
+const renderGroupedAnalysis = (groupedAnalysis) => {
+    return Object.entries(groupedAnalysis).map(([category, data]) => {
+        const availableDatasets = Object.keys(data[0]).filter(key => key !== category); // Filter keys for available datasets
+
+        return (
+            <div key={category} className="mb-6">
+                <h3 className="text-2xl font-bold mb-2 text-gray-300">{category} Analysis</h3>
+                {renderGroupedDatasetDropdown(availableDatasets, setSelectedGroupedDataset)}
+                <table className="min-w-full bg-gray-800 border border-gray-700">
+                    <thead>
+                        <tr>
+                            <th className="py-2 px-4 text-left text-gray-400">Details</th>
+                            {selectedGroupedDataset ? (
+                                <th className="py-2 px-4 text-left text-gray-400">{selectedGroupedDataset}</th>
+                            ) : (
+                                availableDatasets.map((key) => (
+                                    <th key={key} className="py-2 px-4 text-left text-gray-400">{key}</th>
+                                ))
+                            )}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.map((row, idx) => (
+                            <tr key={idx} className="border-b border-gray-700">
+                                <td className="py-2 px-4 text-gray-200">{row[category]}</td>
+                                {selectedGroupedDataset ? (
+                                    <td className="py-2 px-4 text-gray-200">{row[selectedGroupedDataset]}</td>
+                                ) : (
+                                    availableDatasets.map((key) => (
+                                        key !== category && (
+                                            <td key={key} className="py-2 px-4 text-gray-200">{row[key]}</td>
+                                        )
+                                    ))
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    });
+};
+
+
 
   const renderNumericalAnalysis = (numerical) => {
     return (

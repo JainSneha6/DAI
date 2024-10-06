@@ -9,6 +9,8 @@ import os
 import pandas as pd
 import json
 import numpy as np
+from shap import KernelExplainer
+import shap
 
 # Initialize ChromaDB client
 client = chromadb.Client()
