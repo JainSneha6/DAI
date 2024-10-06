@@ -9,14 +9,14 @@ import os
 import pandas as pd
 import json
 import numpy as np
-from shap import KernelExplainer
-import shap
+import uuid
 
 # Initialize ChromaDB client
 client = chromadb.Client()
 
 insight_collection = client.create_collection(name="business_insights")
 analysis_collection = client.create_collection(name="business_analysis")
+feedback_collection = client.create_collection(name="user_feedback")
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -173,7 +173,51 @@ def consultant_query():
         4. Always give a well-reasoned answer, even if the data appears insufficient. 
         5. Answer the question as if you had enough data, ensuring that it addresses all aspects of the question.
         6. Be concise but informative. Provide actionable insights or strategies where applicable.
+        7. For marketing data give the information you have for that marketing campaign for success and failure of the campaigns.
 
+        ### Examples:
+
+        **Example 1:**
+        Context: The company recently launched a digital marketing campaign for a new product targeting millennials. The campaign resulted in a 15% increase in website traffic but a low conversion rate of 2%.
+        Question: What can be improved in the marketing campaign?
+        Answer: To improve the marketing campaign, consider refining the target audience by conducting a deeper analysis of millennial preferences. Utilize A/B testing for different ad creatives and messages to identify what resonates most. Additionally, implementing a retargeting strategy could help convert the increased traffic into sales by reminding visitors of the product. 
+
+        **Example 2:**
+        Context: Sales for product X have been declining over the past two quarters despite an increase in advertising spend. Customer feedback indicates dissatisfaction with customer service.
+        Question: What should the company do to address this issue?
+        Answer: The company should first investigate the specific issues within customer service that are causing dissatisfaction. Implementing training programs for customer service representatives can enhance their performance. Additionally, evaluating the advertising strategy to ensure it aligns with customer needs can improve overall sales. It might be beneficial to reduce advertising spend temporarily until the customer service issues are resolved.
+
+        **Example 3:**
+        Context: The latest quarterly report shows a steady increase in customer retention rates but a decline in new customer acquisition. 
+        Question: What strategies can be employed to attract new customers?
+        Answer: To attract new customers, consider leveraging referral programs to encourage existing customers to recommend the product to their networks. Additionally, enhance online presence through search engine optimization (SEO) and content marketing to increase visibility. Partnering with influencers who resonate with the target demographic can also drive new customer acquisition.
+
+        **Example 4:**
+        Context: A recent market survey indicated that 60% of customers prefer sustainable products. The company's current product line has limited eco-friendly options.
+        Question: How can the company align its product offerings with customer preferences?
+        Answer: To align product offerings with customer preferences, the company should explore developing a line of eco-friendly products. Conducting a feasibility study on sourcing sustainable materials can provide insights into potential costs and production processes. Additionally, marketing these new products as part of a broader commitment to sustainability can enhance brand loyalty among environmentally conscious consumers.
+
+        **Example 5:**
+        Context: The company is facing increasing competition in its primary market. Market share has dropped by 10% over the last year.
+        Question: What steps should the company take to regain its competitive edge?
+        Answer: To regain its competitive edge, the company should conduct a comprehensive competitor analysis to identify strengths and weaknesses compared to rivals. Focus on innovation in product features or customer service can differentiate the brand. Additionally, consider strategic partnerships or collaborations to expand reach and resources, along with revisiting pricing strategies to ensure competitiveness.
+
+        **Example 6:**
+        Context: The customer satisfaction survey results show that 40% of customers are dissatisfied with the delivery times.
+        Question: What improvements can be made to enhance delivery performance?
+        Answer: To enhance delivery performance, the company should analyze the current logistics and supply chain processes to identify bottlenecks. Partnering with additional carriers or implementing a more robust inventory management system can reduce delays. Communicating realistic delivery times to customers and improving order tracking can also help manage expectations and enhance satisfaction.
+
+        **Example 7:**
+        Context: The company is planning to enter a new geographic market where it has no previous presence. Initial research shows a strong demand for its products.
+        Question: What should the company consider before launching in this new market?
+        Answer: Before launching in a new market, the company should conduct thorough market research to understand local preferences, cultural nuances, and regulatory requirements. Developing a localized marketing strategy that resonates with the target audience is crucial. Additionally, assessing distribution channels and building relationships with local partners can facilitate smoother entry and enhance chances of success.
+
+        **Example 8:**
+        Context: The company's product has received mixed reviews online, leading to a decrease in sales. Many reviews mention the high price point as a concern.
+        Question: What strategies can the company use to address this feedback?
+        Answer: The company should analyze the reviews to identify common concerns and address them in future iterations of the product. Conducting a pricing analysis against competitors can help determine if adjustments are necessary. Additionally, consider implementing promotional strategies, such as limited-time discounts or bundling products, to incentivize purchases and improve perceptions of value.
+
+        Just add some supporting facts and figures from the data you have of the company.
         Context: {context}
         Question: {query}
         """
@@ -184,6 +228,8 @@ def consultant_query():
 
         # Run the chain
         answer = chain.run({"context": context, "query": query})
+        
+        answer=answer.replace('**','')
 
         return jsonify({"answer": answer}), 200
 
@@ -368,7 +414,7 @@ def query_analysis():
         3. Just compare the frequency or see the most common value of the thing present in the query and answer queries accordingly.
         4. Please check the information you have thouroughly because u have everything. 
         5. Do not give I dont have context as it can be irritating. If you feel that u don't have any answer then just give the answer which has most frequency
-        6. For marketing data analyse the frequency for success and failure of the campaigns.
+        6. For marketing data give the information you have for that marketing campaign for success and failure of the campaigns.
         Context: {context}
         Question: {query}
         """
@@ -384,6 +430,59 @@ def query_analysis():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
+@app.route('/feedback', methods=['POST'])
+def submit_feedback():
+    try:
+        data = request.get_json()
+        rating = data.get('rating')  # Expecting a numeric rating (1-5)
+        comments = data.get('comments', "")  # Default to empty string if comments not provided
+
+        # Validate the rating to ensure it's a valid integer
+        if rating is None or not isinstance(rating, (int, float)):
+            return jsonify({"error": "Invalid rating. Rating must be a number."}), 400
+
+        # Ensure comments are stored as a string
+        if not isinstance(comments, str):
+            return jsonify({"error": "Comments must be a string."}), 400
+
+        # Create a unique ID for the feedback
+        feedback_id = str(uuid.uuid4())  # Generate a unique ID
+
+        # Create feedback entry
+        feedback_entry = {
+            "rating": int(rating),  # Convert to int if needed
+            "comments": comments
+        }
+        
+
+        feedback_text = json.dumps(feedback_entry)
+        
+        # Insert feedback into ChromaDB
+        feedback_collection.add(ids=[feedback_id], documents=[feedback_text])  # Ensure this is compatible, you might not need json.dumps here
+
+        return jsonify({"message": "Feedback submitted successfully"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    
+    
+@app.route('/feedback/<feedback_id>', methods=['GET'])
+def get_feedback(feedback_id):
+    try:
+        # Assuming you can query by ID directly, this will depend on your ChromaDB setup
+        results = feedback_collection.query(query_texts=[feedback_id], n_results=1)
+
+        feedback_list = []
+        for doc in results['documents'][0]:
+            feedback_list.append(doc)  # Assuming doc already contains the necessary fields
+
+        return jsonify({"feedback": feedback_list}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
     
 
 
