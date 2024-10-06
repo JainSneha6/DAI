@@ -8,50 +8,48 @@ from langchain.prompts import PromptTemplate
 import os
 import pandas as pd
 import json
+import numpy as np
 
 # Initialize ChromaDB client
 client = chromadb.Client()
 
-# Create a collection in ChromaDB for storing your data
-collection = client.create_collection(name="business_insights")
+insight_collection = client.create_collection(name="business_insights")
+analysis_collection = client.create_collection(name="business_analysis")
 
 # Initialize Flask app
 app = Flask(__name__)
-
-# Enable CORS for the entire app
 CORS(app)
 
 # Create uploads directory if it doesn't exist
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-api_key = "AIzaSyC6iqFmmBrHeAzOu4VSgO7SYCkNtmwCZM8"  # Replace with your actual API key
+# Google Generative AI integration
+api_key = "AIzaSyDHqtWn2Ye71A_aCc8udlNyjEpZyf15TBw"  # Replace with actual API key
 llm = ChatGoogleGenerativeAI(api_key=api_key, model='gemini-pro')
 
-# Global variable to store the last uploaded data's summary
+# Global variable to store summary of uploaded data
 last_uploaded_data_summary = {}
 
+# Function to analyze CSV data
 def analyze_csv(data):
-    """Analyzes the uploaded CSV data."""
-    summary = {}
-
-    # Basic info
-    summary['columns'] = data.columns.tolist()
-    summary['data_types'] = data.dtypes.astype(str).to_dict()
-    summary['sample_rows'] = data.head().to_dict(orient='records')
-    
+    """Analyzes the uploaded CSV data and returns summary statistics."""
+    summary = {
+        'columns': data.columns.tolist(),
+        'data_types': data.dtypes.astype(str).to_dict(),
+        'sample_rows': data.head().to_dict(orient='records')
+    }
     return summary
 
 # Route to upload business data
 @app.route('/api/upload-business-data', methods=['POST'])
 def upload_business_data():
-    global last_uploaded_data_summary  # Access the global summary variable
+    global last_uploaded_data_summary
     try:
-        # Get the form data
         business_name = request.form.get("businessName")
         industry = request.form.get("industry")
 
-        # Store all uploaded files in a dictionary
+        # Store uploaded files in a dictionary
         uploaded_files = {
             'salesData': request.files.get('salesData'),
             'customerData': request.files.get('customerData'),
@@ -80,7 +78,7 @@ def upload_business_data():
                 else:
                     return jsonify({"error": f"Unsupported file format for {file_key}"}), 400
 
-                # Store summary for each file type
+                # Store summary for each file
                 file_summaries[file_key] = summary
 
                 # Add data to ChromaDB
@@ -88,15 +86,11 @@ def upload_business_data():
                     data = data.to_dict(orient='records')
 
                 for i, row in enumerate(data):
-                    insight_id = f"{business_name}_{file_key}_{i}"  # Unique ID for each entry
-                    insight_text = json.dumps(row)  # Convert the row to JSON string format
+                    insight_id = f"{business_name}_{file_key}_{i}"
+                    insight_text = json.dumps(row)
+                    insight_collection.add(ids=[insight_id], documents=[insight_text])
 
-                    # Add to ChromaDB
-                    collection.add(ids=[insight_id], documents=[insight_text])
-
-        # Store a summary of all uploaded data
         last_uploaded_data_summary = file_summaries
-
         return jsonify({"message": "Files uploaded and data added successfully!", "summary": file_summaries}), 200
 
     except Exception as e:
@@ -107,119 +101,182 @@ def upload_business_data():
 @app.route('/search-insight', methods=['POST'])
 def search_insight():
     try:
-        # Get search query from request
         query = request.json.get("query")
-        
-        # Perform search in ChromaDB
-        results = collection.search(query_texts=[query], n_results=5)
-        
-        # Return search results
+        # Increase search results to capture more relevant context
+        results = insight_collection.search(query_texts=[query], n_results=10)
+
         return jsonify({"results": results["documents"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-# Route to delete an insight
-@app.route('/delete-insight', methods=['DELETE'])
-def delete_insight():
-    try:
-        # Get the insight id to delete
-        insight_id = request.json.get("id")
-        
-        # Delete from ChromaDB
-        collection.delete(ids=[insight_id])
-        
-        return jsonify({"message": "Insight deleted successfully!"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
 
-def summarize_data(data):
-    """Summarizes the key insights from the uploaded data."""
-    if isinstance(data, pd.DataFrame):
-        summary = {
-            "total_orders": len(data),
-            "columns": data.columns.tolist(),
-            "column_summary": {}
-        }
-        
-        # Generate summaries for each column based on its type
-        for column in data.columns:
-            column_data = data[column]
-            if pd.api.types.is_numeric_dtype(column_data):
-                summary["column_summary"][column] = {
-                    "mean": column_data.mean(),
-                    "median": column_data.median(),
-                    "std_dev": column_data.std(),
-                    "min": column_data.min(),
-                    "max": column_data.max()
-                }
-            elif pd.api.types.is_categorical_dtype(column_data) or pd.api.types.is_object_dtype(column_data):
-                summary["column_summary"][column] = {
-                    "unique_values": column_data.unique().tolist(),
-                    "count": column_data.value_counts().to_dict()
-                }
-            elif pd.api.types.is_datetime64_any_dtype(column_data):
-                summary["column_summary"][column] = {
-                    "min_date": column_data.min(),
-                    "max_date": column_data.max()
-                }
-        
-        return summary
-    return {}
-
-# Route to handle consultant query
 @app.route('/consultant-query', methods=['POST'])
 def consultant_query():
     try:
-        # Get the query from request
         query = request.json.get("query")
+        search_results = insight_collection.query(query_texts=[query], n_results=20)
 
-        # Retrieve relevant data from ChromaDB
-        search_results = collection.query(query_texts=[query], n_results=100)
-
-        documents = search_results["documents"][0]  # Access the list of document strings
+        documents = search_results["documents"][0]
 
         parsed_documents = []
         raw_data = []
         for doc in documents:
             try:
-                parsed_doc = json.loads(doc)  # Convert the stringified JSON back into a dictionary
+                parsed_doc = json.loads(doc)
                 raw_data.append(parsed_doc)
                 formatted_doc = json.dumps(parsed_doc, indent=2)
                 parsed_documents.append(formatted_doc)
             except json.JSONDecodeError:
                 parsed_documents.append(doc)
 
-        # Convert raw_data to DataFrame to generate insights
         data_df = pd.DataFrame(raw_data)
-        
 
         # Construct context
         context = "\n\n".join(parsed_documents)
 
-        # Add last uploaded data summary if available
-        
+        prompt_template = """
+        You are a highly knowledgeable virtual business consultant with access to comprehensive data about the company. 
+        Your task is to always provide insightful, accurate, and helpful answers based on the data provided. The data is always sufficient to derive an answer. 
+        You must:
+        1. Analyze the context thoroughly.
+        2. Use the provided data to support your answer.
+        3. If the data is incomplete or missing, make intelligent assumptions based on common business knowledge or trends.
+        4. Always give a well-reasoned answer, even if the data appears insufficient. 
+        5. Answer the question as if you had enough data, ensuring that it addresses all aspects of the question.
+        6. Be concise but informative. Provide actionable insights or strategies where applicable.
 
-        # Log context for debugging
-        print("Constructed Context:", context)
+        Context: {context}
+        Question: {query}
+        """
 
-        # Initialize the LLMChain with the LLM
-        prompt_template = """This is the business information of the company. Analyse this information.
-        Then use your own intelligence to answer the question properly.
-        If proper information cannot be derived from the context, still make assumptions accordingly and answer the query.
-        Tackle any query which is being asked even if information may not be present in the context. Make use of your existing knowledge to answer that.
-        Give the final answer in one single paragraph without any asterisks.
-        {context}
-        Question: {query}"""
-        
+
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "query"])
         chain = LLMChain(llm=llm, prompt=prompt)
 
-        # Run the chain with the retrieved context and user query
+        # Run the chain
         answer = chain.run({"context": context, "query": query})
 
-        # Return the answer from the LLM
         return jsonify({"answer": answer}), 200
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
+# Helper function to classify columns by data type
+def classify_columns(df):
+    numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
+    categorical_columns = df.select_dtypes(exclude=[np.number, np.datetime64]).columns.tolist()
+    return numeric_columns, categorical_columns
+
+@app.route('/api/analyze-data', methods=['POST'])
+def analyze_data():
+    global last_analysis_summary  # Keep track of the last analysis summary
+    try:
+        data_type = request.json.get('dataType')  # Get the type of data (sales, customer, etc.)
+        
+        # Use the appropriate file based on data type
+        file_mapping = {
+            'salesData': 'uploads/SalesData.csv',
+            'customerData': 'uploads/CustomerData.csv',
+            'inventoryData': 'uploads/InventoryData.csv',
+            'marketingCampaignsData': 'uploads/MarketingData.csv'
+        }
+        
+        data_file = file_mapping.get(data_type)
+        
+        if not data_file or not os.path.exists(data_file):
+            return jsonify({"error": "File not found or invalid data type"}), 400
+        
+        # Read CSV into DataFrame
+        df = pd.read_csv(data_file)
+        
+        # Classify columns into numeric and categorical
+        numeric_columns, categorical_columns = classify_columns(df)
+        
+        # Create a response dict to hold analysis results
+        analysis_result = {
+            "categorical": {},
+            "numerical": {}
+        }
+
+        # Analyze categorical columns
+        for col in categorical_columns:
+            analysis_result["categorical"][col] = {
+                'unique_values': int(df[col].nunique()),  
+                'most_common': df[col].value_counts().idxmax(),  
+                'frequency': df[col].value_counts().to_dict()  
+            }
+
+        # Analyze numeric columns
+        for col in numeric_columns:
+            analysis_result["numerical"][col] = {
+                'sum': float(df[col].sum()),  
+                'mean': float(df[col].mean()),  
+                'max': float(df[col].max()),  
+                'min': float(df[col].min())  
+            }
+
+        # Store the analysis summary in ChromaDB
+        analysis_id = f"analysis_{data_type}"
+        analysis_text = json.dumps(analysis_result)
+        analysis_collection.add(ids=[analysis_id], documents=[analysis_text])
+
+        last_analysis_summary = analysis_result
+        return jsonify(analysis_result), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/query-analysis', methods=['POST'])
+def query_analysis():
+    """Endpoint to query analysis results from ChromaDB."""
+    try:
+        query = request.json.get("query")
+        
+        # Search the analysis results collection
+        results = analysis_collection.query(query_texts=[query], n_results=20)
+        print(results)
+
+        documents = results["documents"][0]
+
+        parsed_documents = []
+        raw_data = []
+        for doc in documents:
+            try:
+                parsed_doc = json.loads(doc)
+                raw_data.append(parsed_doc)
+                formatted_doc = json.dumps(parsed_doc, indent=2)
+                parsed_documents.append(formatted_doc)
+            except json.JSONDecodeError:
+                parsed_documents.append(doc)
+
+        data_df = pd.DataFrame(raw_data)
+
+        # Construct context
+        context = "\n\n".join(parsed_documents)
+
+        prompt_template = """
+        You are a highly knowledgeable virtual business consultant with access to comprehensive data about the company. 
+        Your task is to always provide insightful, accurate, and helpful answers based on the data provided. The data is always sufficient to derive an answer. 
+        You must:
+        1. Analyze the context thoroughly.
+        2. Be concise but informative. Provide actionable insights or strategies where applicable.
+        3. Just compare the frequency or see the most common value of the thing present in the query and answer queries accordingly.
+        4. Please check the information you have thouroughly because u have everything. 
+        5. Do not give I dont have context as it can be irritating. If you feel that u don't have any answer then just give the answer which has most frequency
+        6. For marketing data analyse the frequency for success and failure of the campaigns.
+        Context: {context}
+        Question: {query}
+        """
+
+
+        prompt = PromptTemplate(template=prompt_template, input_variables=["context", "query"])
+        chain = LLMChain(llm=llm, prompt=prompt)
+
+        # Run the chain
+        answer = chain.run({"context": context, "query": query})
+
+        return jsonify({"answer": answer}), 200
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 

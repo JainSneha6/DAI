@@ -12,6 +12,7 @@ function NavBar() {
           <Link to="/" className="text-white hover:text-blue-500 transition duration-300">Home</Link>
           <Link to="/upload" className="text-white hover:text-blue-500 transition duration-300">Your Business</Link>
           <Link to="/virtual-consultant" className="text-white hover:text-blue-500 transition duration-300">Virtual Consultant</Link>
+          <Link to="/insight-bot" className="text-white hover:text-blue-500 transition duration-300">InsightBot</Link>
         </div>
       </div>
     </nav>

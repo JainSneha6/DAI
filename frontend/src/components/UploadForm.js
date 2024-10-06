@@ -81,7 +81,6 @@ function UploadForm() {
                 />
               </div>
 
-              {/* Industry Selection */}
               <div>
                 <label className="block text-gray-700 mb-1" htmlFor="industry">Industry</label>
                 <select
@@ -104,7 +103,6 @@ function UploadForm() {
                 </select>
               </div>
 
-              {/* File Upload Sections */}
               <div>
                 <label className="block text-gray-700 mb-1" htmlFor="salesData">Sales Data</label>
                 <input
@@ -117,8 +115,6 @@ function UploadForm() {
                   required
                 />
               </div>
-
-
 
               <div>
                 <label className="block text-gray-700 mb-1" htmlFor="customerData">Customer Data</label>

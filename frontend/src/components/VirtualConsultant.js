@@ -44,25 +44,19 @@ function VirtualConsultant() {
   };
 
   return (
-    <div
-      className="relative bg-cover bg-center min-h-screen text-white"
-      style={{ backgroundImage: "url('/background.png')" }}
-    >
-      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex flex-col">
-        <header className="p-4 text-center font-bold text-2xl">Virtual Consultant</header>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6">
+      <div className="container mx-auto">
+        <header className="p-4 text-center font-bold text-4xl text-white mb-6">Virtual Consultant</header>
         <main className="flex-1 overflow-y-auto p-4">
-          <div className=" rounded-lg shadow-lg p-4 h-full overflow-auto">
+          <div className="rounded-lg shadow-lg p-4 h-full overflow-auto">
             {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`mb-3 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
+              <div key={index} className={`mb-3 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`flex items-center ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
                   {message.sender === 'bot' && (
                     <img src="/bot-avatar.png" alt="Bot" className="w-8 h-8 rounded-full mr-2" />
                   )}
                   <div
-                    className={`max-w-xs p-3 rounded-lg text-sm shadow-md ${
+                    className={`max-w-3xl p-3 rounded-lg text-sm shadow-md ${
                       message.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
                     }`}
                   >
@@ -74,7 +68,7 @@ function VirtualConsultant() {
                 </div>
               </div>
             ))}
-            {loading && <div className="text-center text-gray-300 animate-pulse">Loading...</div>}
+            {loading && <div className="text-center text-blue-300 animate-pulse">Loading...</div>}
           </div>
         </main>
         <footer className="p-4 shadow-md">
@@ -89,7 +83,7 @@ function VirtualConsultant() {
             />
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-r-lg transition duration-300"
+              className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold py-3 px-4 rounded-r-lg transition duration-300 hover:from-blue-600 hover:to-blue-800"
             >
               Send
             </button>
