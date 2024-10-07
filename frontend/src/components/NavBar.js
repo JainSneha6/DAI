@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import VoiceAssistant from './VoiceAssistant';
 
 function NavBar() {
   return (
@@ -14,6 +15,7 @@ function NavBar() {
           <Link to="/virtual-consultant" className="text-white hover:text-blue-500 transition duration-300">Virtual Consultant</Link>
           <Link to="/insight-bot" className="text-white hover:text-blue-500 transition duration-300">InsightBot</Link>
           <Link to="/grouped-analysis" className="text-white hover:text-blue-500 transition duration-300">Dashboard</Link>
+          <VoiceAssistant /> 
         </div>
       </div>
     </nav>

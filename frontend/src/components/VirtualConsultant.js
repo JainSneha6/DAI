@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaStar } from 'react-icons/fa';
-import { FaUser, FaRobot } from 'react-icons/fa'; // Importing icons for user and bot
+import { FaUser, FaRobot } from 'react-icons/fa'; 
+import prompts from '../utils/prompts.js'; 
 
 function VirtualConsultant() {
   const [query, setQuery] = useState('');
@@ -11,6 +12,7 @@ function VirtualConsultant() {
   const [rating, setRating] = useState(0);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [dynamicPrompts, setDynamicPrompts] = useState(prompts.slice(0, 2)); 
 
   useEffect(() => {
     const processAndStoreData = async () => {
@@ -76,6 +78,7 @@ function VirtualConsultant() {
         const data = await response.json();
         const botMessage = { text: data.answer, sender: 'bot' };
         setMessages((prev) => [...prev, botMessage]);
+        updateDynamicPrompts(); 
       } else {
         const errorMessage = { text: 'Error fetching answer. Please try again.', sender: 'bot' };
         setMessages((prev) => [...prev, errorMessage]);
@@ -119,6 +122,23 @@ function VirtualConsultant() {
     }
   };
 
+  const updateDynamicPrompts = () => {
+    const randomPrompts = [];
+    const usedIndexes = new Set();
+    while (randomPrompts.length < 2) { 
+      const randomIndex = Math.floor(Math.random() * prompts.length);
+      if (!usedIndexes.has(randomIndex)) {
+        usedIndexes.add(randomIndex);
+        randomPrompts.push(prompts[randomIndex]);
+      }
+    }
+    setDynamicPrompts(randomPrompts); 
+  };
+
+  const handlePromptSelect = (prompt) => {
+    setQuery(prompt); 
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6">
       <div className="container mx-auto">
@@ -149,6 +169,21 @@ function VirtualConsultant() {
               </>
             )}
             {loading && <div className="text-center text-blue-300 animate-pulse">Loading...</div>}
+          </div>
+
+          <div className="mt-4">
+            <h4 className="text-white text-lg">Choose a prompt:</h4>
+            <div className="flex space-x-2">
+              {(dynamicPrompts || []).map((prompt, index) => (
+                <button
+                  key={index}
+                  onClick={() => handlePromptSelect(prompt)}
+                  className="bg-blue-500 text-white p-2 rounded transition duration-300 hover:bg-blue-600"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         </main>
         <footer className="p-4 shadow-md">

@@ -61,110 +61,107 @@ function UploadForm() {
   };
 
   return (
-    <div className="relative bg-cover bg-center min-h-screen text-white" style={{ backgroundImage: "url('/background.png')" }}>
-      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm">
-        <div className="relative flex flex-col items-center justify-center h-screen px-6">
-          <div className="max-w-xl mx-auto p-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg shadow-lg border border-blue-300">
-            <h2 className="text-3xl font-bold mb-4 text-blue-800 text-center">Upload Your Business Data</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-gray-700 mb-1" htmlFor="businessName">Business Name</label>
-                <input
-                  type="text"
-                  id="businessName"
-                  name="businessName"
-                  value={formData.businessName}
-                  onChange={handleChange}
-                  className="border border-blue-300 text-black p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  placeholder="Enter your business name"
-                  required
-                />
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6 overflow-y-auto">
+      <div className="container mx-auto ">
+        <h1 className="text-4xl font-bold mb-6 text-center text-white">Upload Your Business Data</h1>
 
-              <div>
-                <label className="block text-gray-700 mb-1" htmlFor="industry">Industry</label>
-                <select
-                  id="industry"
-                  name="industry"
-                  value={formData.industry}
-                  onChange={handleChange}
-                  className="border border-blue-300 p-2 text-black rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  required
-                >
-                  <option value="">Select your industry</option>
-                  <option value="technology">Technology</option>
-                  <option value="healthcare">Healthcare</option>
-                  <option value="finance">Finance</option>
-                  <option value="education">Education</option>
-                  <option value="retail">Retail</option>
-                  <option value="manufacturing">Manufacturing</option>
-                  <option value="e-commerce">E-commerce</option>
-                  <option value="others">Others</option>
-                </select>
-              </div>
+        <div className="max-w-xl mx-auto bg-gray-900 p-6 rounded-lg shadow-lg">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-gray-400 mb-2" htmlFor="businessName">Business Name</label>
+              <input
+                type="text"
+                id="businessName"
+                name="businessName"
+                value={formData.businessName}
+                onChange={handleChange}
+                className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your business name"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-gray-700 mb-1" htmlFor="salesData">Sales Data</label>
-                <input
-                  type="file"
-                  id="salesData"
-                  name="salesData"
-                  onChange={handleFileChange}
-                  className="border text-black border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  accept=".csv, .xlsx, .json"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 mb-1" htmlFor="customerData">Customer Data</label>
-                <input
-                  type="file"
-                  id="customerData"
-                  name="customerData"
-                  onChange={handleFileChange}
-                  className="border text-black border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  accept=".csv, .xlsx, .json"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 mb-1" htmlFor="inventoryData">Inventory Data</label>
-                <input
-                  type="file"
-                  id="inventoryData"
-                  name="inventoryData"
-                  onChange={handleFileChange}
-                  className="border text-black border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  accept=".csv, .xlsx, .json"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 mb-1" htmlFor="marketingCampaignsData">Marketing Campaigns Data</label>
-                <input
-                  type="file"
-                  id="marketingCampaignsData"
-                  name="marketingCampaignsData"
-                  onChange={handleFileChange}
-                  className="border text-black border-blue-300 p-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-                  accept=".csv, .xlsx, .json"
-                  required
-                />
-              </div>
-
-
-
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition duration-300"
+            <div>
+              <label className="block text-gray-400 mb-2" htmlFor="industry">Industry</label>
+              <select
+                id="industry"
+                name="industry"
+                value={formData.industry}
+                onChange={handleChange}
+                className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               >
-                Upload
-              </button>
-            </form>
-          </div>
+                <option value="" disabled>Select your industry</option>
+                <option value="technology">Technology</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="finance">Finance</option>
+                <option value="education">Education</option>
+                <option value="retail">Retail</option>
+                <option value="manufacturing">Manufacturing</option>
+                <option value="e-commerce">E-commerce</option>
+                <option value="others">Others</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-gray-400 mb-2" htmlFor="salesData">Sales Data</label>
+              <input
+                type="file"
+                id="salesData"
+                name="salesData"
+                onChange={handleFileChange}
+                className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                accept=".csv, .xlsx, .json"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-400 mb-2" htmlFor="customerData">Customer Data</label>
+              <input
+                type="file"
+                id="customerData"
+                name="customerData"
+                onChange={handleFileChange}
+                className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                accept=".csv, .xlsx, .json"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-400 mb-2" htmlFor="inventoryData">Inventory Data</label>
+              <input
+                type="file"
+                id="inventoryData"
+                name="inventoryData"
+                onChange={handleFileChange}
+                className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                accept=".csv, .xlsx, .json"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-400 mb-2" htmlFor="marketingCampaignsData">Marketing Campaigns Data</label>
+              <input
+                type="file"
+                id="marketingCampaignsData"
+                name="marketingCampaignsData"
+                onChange={handleFileChange}
+                className="w-full p-2 bg-gray-800 text-white border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                accept=".csv, .xlsx, .json"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-gray-700 text-white font-bold py-2 px-4 rounded shadow hover:bg-gray-800 transition duration-200"
+            >
+              Upload
+            </button>
+          </form>
         </div>
       </div>
     </div>

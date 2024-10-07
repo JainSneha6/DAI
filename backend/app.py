@@ -10,30 +10,27 @@ import pandas as pd
 import json
 import numpy as np
 import uuid
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-# Initialize ChromaDB client
 client = chromadb.Client()
 
 insight_collection = client.create_collection(name="business_insights")
 analysis_collection = client.create_collection(name="business_analysis")
 feedback_collection = client.create_collection(name="user_feedback")
 
-# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Create uploads directory if it doesn't exist
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Google Generative AI integration
-api_key = "AIzaSyDHqtWn2Ye71A_aCc8udlNyjEpZyf15TBw"  # Replace with actual API key
+api_key = "AIzaSyDHqtWn2Ye71A_aCc8udlNyjEpZyf15TBw"  
 llm = ChatGoogleGenerativeAI(api_key=api_key, model='gemini-pro')
 
-# Global variable to store summary of uploaded data
+analyzer = SentimentIntensityAnalyzer()
+
 last_uploaded_data_summary = {}
 
-# Function to analyze CSV data
 def analyze_csv(data):
     """Analyzes the uploaded CSV data and returns summary statistics."""
     summary = {
@@ -43,12 +40,14 @@ def analyze_csv(data):
     }
     return summary
 
-# Route to upload business data
-# Route to upload business data (only saving files, no processing)
+def analyze_sentiment(text):
+    """Analyze the sentiment of the given text using VADER."""
+    sentiment_scores = analyzer.polarity_scores(text)
+    return sentiment_scores
+
 @app.route('/api/upload-business-data', methods=['POST'])
 def upload_business_data():
     try:
-        # Store uploaded files in a dictionary
         uploaded_files = {
             'salesData': request.files.get('salesData'),
             'customerData': request.files.get('customerData'),
@@ -62,23 +61,60 @@ def upload_business_data():
                 file_extension = file.filename.split('.')[-1]
                 file_path = os.path.join(UPLOAD_FOLDER, file.filename)
 
-                # Save the file to the specified directory
                 file.save(file_path)
 
-                # Store the saved file path for future reference
                 file_paths[file_key] = file_path
 
-        # Respond with success message and file paths
         return jsonify({"message": "Files uploaded successfully!", "file_paths": file_paths}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
 
-# Route to process saved files and store data in ChromaDB when the virtual consultant page is accessed
+def calcVaderSentiment():
+    customer_data_path = f'uploads/CustomerData.csv'
+    
+    try:
+        df = pd.read_csv(customer_data_path)
+    except Exception as e:
+        return
+    
+    if 'Product Preferences' in df.columns:
+        column_name = 'Product Preferences'
+    elif 'Product Feedback' in df.columns:
+        column_name = 'Product Feedback'
+    else:
+        return 
+    
+    print(column_name)
+    
+    df['Sentiment'] = df[column_name].apply(lambda x: analyze_sentiment(str(x)))
+
+    sentiment_results = df[['Sentiment', column_name]].to_dict(orient='records')
+
+    positive_count = 0
+    neutral_count = 0
+    negative_count = 0
+
+    for sentiment in df['Sentiment']:
+        compound_score = sentiment['compound']
+        if compound_score >= 0.05:
+            positive_count += 1
+        elif compound_score <= -0.05:
+            negative_count += 1
+        else:
+            neutral_count += 1
+
+    
+    return jsonify({
+        "answer": f'Positive Feedback: {positive_count}, Neutral Feedback: {neutral_count}, negative Feedback: {negative_count}'
+    }), 200
+
+        
+
 @app.route('/process-and-store-data', methods=['GET'])
 def process_and_store_data():
     try:
-        # Map file types to their saved file paths
         file_mapping = {
             'salesData': 'uploads/SalesData.csv',
             'customerData': 'uploads/CustomerData.csv',
@@ -88,12 +124,10 @@ def process_and_store_data():
 
         file_summaries = {}
 
-        # Process each saved file
         for file_key, file_path in file_mapping.items():
             if os.path.exists(file_path):
                 file_extension = file_path.split('.')[-1]
 
-                # Process based on file type
                 if file_extension == "csv":
                     data = pd.read_csv(file_path)
                     summary = analyze_csv(data)
@@ -107,10 +141,8 @@ def process_and_store_data():
                 else:
                     return jsonify({"error": f"Unsupported file format for {file_key}"}), 400
 
-                # Store summary for each file
                 file_summaries[file_key] = summary
 
-                # Add data to ChromaDB (only if it's a DataFrame)
                 if isinstance(data, pd.DataFrame):
                     data = data.to_dict(orient='records')
 
@@ -124,14 +156,10 @@ def process_and_store_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
-
-# Route to search for insights
 @app.route('/search-insight', methods=['POST'])
 def search_insight():
     try:
         query = request.json.get("query")
-        # Increase search results to capture more relevant context
         results = insight_collection.search(query_texts=[query], n_results=10)
 
         return jsonify({"results": results["documents"]}), 200
@@ -159,8 +187,11 @@ def consultant_query():
                 parsed_documents.append(doc)
 
         data_df = pd.DataFrame(raw_data)
+        
+        if "feedback" in query.lower():
+            print()
+            return calcVaderSentiment()
 
-        # Construct context
         context = "\n\n".join(parsed_documents)
 
         prompt_template = """
@@ -174,6 +205,7 @@ def consultant_query():
         5. Answer the question as if you had enough data, ensuring that it addresses all aspects of the question.
         6. Be concise but informative. Provide actionable insights or strategies where applicable.
         7. For marketing data give the information you have for that marketing campaign for success and failure of the campaigns.
+        8. If asked about feedbacks then give the sales_data_sentiment_counts that you have.
 
         ### Examples:
 
@@ -226,7 +258,6 @@ def consultant_query():
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "query"])
         chain = LLMChain(llm=llm, prompt=prompt)
 
-        # Run the chain
         answer = chain.run({"context": context, "query": query})
         
         answer=answer.replace('**','')
@@ -236,7 +267,6 @@ def consultant_query():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     
-# Function to classify columns into numeric and categorical
 def classify_columns(df):
     numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
     categorical_columns = df.select_dtypes(exclude=[np.number, np.datetime64]).columns.tolist()
@@ -244,27 +274,21 @@ def classify_columns(df):
 
 def analyze_numerical_by_categorical(df):
     """Analyze numerical columns grouped by categorical values, ignoring numeric columns that contain 'ID' or 'Date'."""
-    # Classify columns into numeric and categorical
+    
     numeric_columns, categorical_columns = classify_columns(df)
     
-    # Filter out numeric columns containing 'ID' or 'Date'
     numeric_columns = [col for col in numeric_columns if 'ID' not in col and 'Date' not in col]
     
     analysis_result = {}
     
-    # For each categorical column, group by and calculate statistics for numeric columns
     for cat_col in categorical_columns:
-        # Check if the categorical column contains 'ID' or 'Date'
         if 'ID' in cat_col or 'Date' in cat_col:
-            continue  # Skip this column
+            continue  
 
-        # Group by the categorical column and aggregate statistics
         grouped = df.groupby(cat_col)[numeric_columns].agg(['min', 'max', 'mean', 'sum'])
-        
-        # Flatten the MultiIndex columns for easier JSON serialization
+  
         grouped.columns = ['_'.join(map(str, col)).strip() for col in grouped.columns.values]
         
-        # Convert the DataFrame to a dictionary
         analysis_result[cat_col] = grouped.reset_index().to_dict(orient='records')
 
     return analysis_result
@@ -272,12 +296,10 @@ def analyze_numerical_by_categorical(df):
 
 @app.route('/api/analyze-data', methods=['POST'])
 def analyze_data():
-    global last_analysis_summary  # Keep track of the last analysis summary
+    global last_analysis_summary  
     try:
-        data_type = request.json.get('dataType')  # Get the type of data (sales, customer, etc.)
+        data_type = request.json.get('dataType') 
         
-        
-        # Use the appropriate file based on data type
         file_mapping = {
             'salesData': 'uploads/SalesData.csv',
             'customerData': 'uploads/CustomerData.csv',
@@ -290,21 +312,16 @@ def analyze_data():
         if not data_file or not os.path.exists(data_file):
             return jsonify({"error": "File not found or invalid data type"}), 400
         
-        # Read CSV into DataFrame
         df = pd.read_csv(data_file)
         
-        
-        # Classify columns into numeric and categorical
         numeric_columns, categorical_columns = classify_columns(df)
         
-        # Create a response dict to hold analysis results
         analysis_result = {
             "categorical": {},
             "numerical": {},
-            "grouped_analysis": {}  # New section to hold grouped analysis
+            "grouped_analysis": {}  
         }
 
-        # Analyze categorical columns
         for col in categorical_columns:
             analysis_result["categorical"][col] = {
                 'unique_values': int(df[col].nunique()),  
@@ -312,7 +329,6 @@ def analyze_data():
                 'frequency': df[col].value_counts().to_dict()  
             }
 
-        # Analyze numeric columns
         for col in numeric_columns:
             analysis_result["numerical"][col] = {
                 'sum': float(df[col].sum()),  
@@ -325,12 +341,9 @@ def analyze_data():
         analysis_text = json.dumps(analysis_result)
         analysis_collection.add(ids=[analysis_id], documents=[analysis_text])
 
-        # Perform analysis on numerical columns grouped by categorical values
         grouped_analysis_result = analyze_numerical_by_categorical(df)
         
-        analysis_result["grouped_analysis"] = grouped_analysis_result  # Add grouped analysis to the result
-        # Store the analysis summary in ChromaDB
-        
+        analysis_result["grouped_analysis"] = grouped_analysis_result  
        
         last_analysis_summary = analysis_result
     
@@ -339,13 +352,12 @@ def analyze_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/api/grouped-analysis', methods=['POST'])  # Change to POST
+@app.route('/api/grouped-analysis', methods=['POST'])  
 def get_grouped_analysis():
     try:
         data_type = request.json.get('dataType') 
-        print(data_type)  # Get the type of data (sales, customer, etc.)
+        print(data_type)  
         
-        # Use the appropriate file based on data type
         file_mapping = {
             'salesData': 'uploads/SalesData.csv',
             'customerData': 'uploads/CustomerData.csv',
@@ -358,18 +370,15 @@ def get_grouped_analysis():
         if not data_file or not os.path.exists(data_file):
             return jsonify({"error": "File not found or invalid data type"}), 400
         
-        # Read CSV into DataFrame
         df = pd.read_csv(data_file)
         
-        # Create a response dict to hold analysis results
         analysis_result = {
-            "grouped_analysis": {}  # New section to hold grouped analysis
+            "grouped_analysis": {}  
         }
 
-        # Perform analysis on numerical columns grouped by categorical values
         grouped_analysis_result = analyze_numerical_by_categorical(df)
         
-        analysis_result["grouped_analysis"] = grouped_analysis_result  # Add grouped analysis to the result
+        analysis_result["grouped_analysis"] = grouped_analysis_result 
         
         return jsonify(analysis_result), 200
 
@@ -383,7 +392,6 @@ def query_analysis():
     try:
         query = request.json.get("query")
         
-        # Search the analysis results collection
         results = analysis_collection.query(query_texts=[query], n_results=1)
         print(results)
 
@@ -402,7 +410,6 @@ def query_analysis():
 
         data_df = pd.DataFrame(raw_data)
 
-        # Construct context
         context = "\n\n".join(parsed_documents)
 
         prompt_template = """
@@ -415,6 +422,7 @@ def query_analysis():
         4. Please check the information you have thouroughly because u have everything. 
         5. Do not give I dont have context as it can be irritating. If you feel that u don't have any answer then just give the answer which has most frequency
         6. For marketing data give the information you have for that marketing campaign for success and failure of the campaigns.
+        7. If somebody asks about the highest or lowest of something then just check the frequency of that thing and whoever has the highest or lowest frequest should be your answer.
         Context: {context}
         Question: {query}
         """
@@ -423,7 +431,6 @@ def query_analysis():
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "query"])
         chain = LLMChain(llm=llm, prompt=prompt)
 
-        # Run the chain
         answer = chain.run({"context": context, "query": query})
 
         return jsonify({"answer": answer}), 200
@@ -435,31 +442,25 @@ def query_analysis():
 def submit_feedback():
     try:
         data = request.get_json()
-        rating = data.get('rating')  # Expecting a numeric rating (1-5)
-        comments = data.get('comments', "")  # Default to empty string if comments not provided
+        rating = data.get('rating')  
+        comments = data.get('comments', "")  
 
-        # Validate the rating to ensure it's a valid integer
         if rating is None or not isinstance(rating, (int, float)):
             return jsonify({"error": "Invalid rating. Rating must be a number."}), 400
 
-        # Ensure comments are stored as a string
         if not isinstance(comments, str):
             return jsonify({"error": "Comments must be a string."}), 400
 
-        # Create a unique ID for the feedback
-        feedback_id = str(uuid.uuid4())  # Generate a unique ID
+        feedback_id = str(uuid.uuid4())  
 
-        # Create feedback entry
         feedback_entry = {
-            "rating": int(rating),  # Convert to int if needed
+            "rating": int(rating),  
             "comments": comments
         }
-        
 
         feedback_text = json.dumps(feedback_entry)
         
-        # Insert feedback into ChromaDB
-        feedback_collection.add(ids=[feedback_id], documents=[feedback_text])  # Ensure this is compatible, you might not need json.dumps here
+        feedback_collection.add(ids=[feedback_id], documents=[feedback_text])  
 
         return jsonify({"message": "Feedback submitted successfully"}), 201
 
@@ -471,22 +472,17 @@ def submit_feedback():
 @app.route('/feedback/<feedback_id>', methods=['GET'])
 def get_feedback(feedback_id):
     try:
-        # Assuming you can query by ID directly, this will depend on your ChromaDB setup
         results = feedback_collection.query(query_texts=[feedback_id], n_results=1)
 
         feedback_list = []
         for doc in results['documents'][0]:
-            feedback_list.append(doc)  # Assuming doc already contains the necessary fields
+            feedback_list.append(doc)  
 
         return jsonify({"feedback": feedback_list}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-    
 
-
-
-# Start the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
