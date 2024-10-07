@@ -1,48 +1,69 @@
-# DecisivAI - A RAG-based Decision-Making System
+# DecisivAI: Business Decision-Making Platform
 
-**DecisivAI** is an intelligent decision-support platform that equips businesses and enterprises with AI-powered tools for making informed decisions. Our system integrates **Retrieval-Augmented Generation (RAG)** techniques with **Large Language Models (LLMs)** to provide a holistic solution, enabling real-time insights, scenario simulations, and precise data visualization. By leveraging company-specific data and continuous learning mechanisms, DecisivAI becomes a reliable virtual consultant.
+DecisivAI is an AI-powered platform designed to help businesses make informed decisions through data analysis, scenario simulation, and interactive insights. This platform integrates advanced machine learning models, natural language processing, and real-time business data visualization to empower enterprises with actionable insights.
 
----
+## Overview
 
-## 🌟 Project Overview
+This project leverages advanced AI models, including RAG (Retrieval-Augmented Generation), Few-Shot Learning, and BERT, to provide users with a virtual consultant capable of answering queries, simulating scenarios, and providing insights based on real-world data. The system also incorporates an InsightBot for generating in-depth data analysis and an interactive dashboard for visualizing key metrics.
 
-The main components of **DecisivAI** include:
+![DecisivAI Architecture](./path_to_image)
 
-- **Enhanced Business Decisions**: Uses enterprise-specific data and industry trends for precision in decision-making.
-- **Actionable Insights**: Provides answers to user queries and offers comprehensive AI-driven insights using natural language processing (NLP).
-- **Scenario Simulations**: Predicts potential outcomes by simulating real-world business scenarios based on data and user inputs.
-- **Visual Data Representation**: Utilizes explainable AI layers to offer clear, interactive visualizations of decision paths, metrics, and projections.
+## Key Features
 
----
+### 1. **Virtual Consultant**
 
-## 🛠️ System Components
+| Feature             | Description                                                                                                                                  |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| Query & Answer       | Users can ask the virtual consultant business-related questions, and the system will return relevant insights.                               |
+| Feedback Integration | Users can provide feedback to improve the quality of the answers over time, allowing the system to fine-tune and enhance its responses.       |
 
-| Component               | Description                                                                 |
-|-------------------------|-----------------------------------------------------------------------------|
-| 🔮 **Virtual Consultant**| Uses **VectorDB** and **BERT-based LLM** for decision support and data trends.|
-| 🎯 **Informed Decisions**| Continuously analyzes KPIs and performs model tuning based on feedback.      |
-| 🤖 **AI-Bot**            | Provides conversational AI answers for long-term strategies and planning.    |
-| 🧠 **Scenario Simulation**| Simulates business scenarios using LLMs and real-time data.                  |
-| 📊 **Data Visualization**| Rich, interactive charts and graphs using **Recharts** and **Streamlit**.     |
+### 2. **InsightBot**
 
----
+| Data Type          | Analysis Features                                                                                                          |
+|--------------------|----------------------------------------------------------------------------------------------------------------------------|
+| **Categorical Data**| Unique values, most common values, and frequency of specific fields.                                                       |
+| **Numerical Data**  | Provides minimum, maximum, sum, and mean values for numerical metrics.                                                     |
+| **Visualization**   | Integrates with ReCharts.js to display bar charts for easy data visualization.                                             |
 
-## 📊 Workflow Diagram
+### 3. **Scenario Simulation**
 
-```mermaid
-graph TD;
-    A[Data Ingestion] --> B[Model Training]
-    B --> C[User Interaction]
-    C --> D[Continuous Learning]
-    D --> B
-```
+| Scenario Simulation | Description                                                                                                               |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------|
+| Real-World Scenarios | Simulates real-world business scenarios and fine-tunes the AI models to provide better answers based on evolving trends.   |
 
-## 📈 Key Performance Indicators (KPIs)
+### 4. **AI-Powered Models**
 
-| KPI                          | Description                                               | Current Value | Target Value |
-|------------------------------|----------------------------------------------------------|---------------|--------------|
-| Revenue Growth Rate          | Measures the percentage increase in revenue              | 15%           | 25%          |
-| Customer Satisfaction Score   | Evaluates customer feedback and satisfaction              | 85%           | 90%          |
-| Decision Accuracy Rate        | Percentage of correct decisions made by the system       | 80%           | 95%          |
-| Average Response Time         | Time taken by the AI-Bot to respond to user queries     | 2 seconds     | 1 second     |
+| Model              | Description                                                                                                                |
+|--------------------|----------------------------------------------------------------------------------------------------------------------------|
+| **VectorDB**        | Stores business-specific data and industry trends for rapid retrieval.                                                     |
+| **RAG**             | Enhances the answers provided by the Virtual Consultant by leveraging external documents or resources.                      |
+| **Few-Shot Learning**| Allows the model to generalize answers with minimal additional data training.                                              |
+| **BERT**            | A natural language processing model that improves the system's ability to understand user queries and generate insights.    |
+
+### 5. **Interactive Dashboard**
+
+| Feature              | Description                                                                                                                |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Visualization         | Displays bar charts to help users grasp key trends and statistics in a user-friendly format using **ReCharts.js**.          |
+
+## How It Works
+
+1. **Input**: Users provide data related to the business, including sales, customer, inventory, and marketing data.
+2. **Data Categorization**: The InsightBot processes the input data, splitting it into categorical and numerical values.
+3. **Model Interaction**:
+   - The AI model, fine-tuned through feedback and scenario simulations, retrieves relevant data from the VectorDB and applies RAG, Few-Shot Learning, and BERT to generate precise answers and insights.
+4. **Insights Generation**: The system presents the output in a tabular format or as interactive bar charts on the dashboard.
+5. **Feedback Loop**: Users can provide feedback to enhance the model's performance, leading to better results in the future.
+
+## Technology Stack
+
+| Technology        | Description                                                                                                                     |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| **Frontend**       | React.js                                                                                                                        |
+| **Backend**        | Flask                                                                                                                           |
+| **AI Models**      | RAG, Few-Shot, BERT                                                                                                             |
+| **Database**       | VectorDB                                                                                                                        |
+| **Data Visualization**| ReCharts.js                                                                                                                   |
+| **Socket.io**      | For real-time interactions                                                                                                      |
+| **ChromaDB**       | For feedback storage                                                                                                            |
 
