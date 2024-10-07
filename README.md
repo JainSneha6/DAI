@@ -6,8 +6,6 @@ DecisivAI is an AI-powered platform designed to help businesses make informed de
 
 This project leverages advanced AI models, including RAG (Retrieval-Augmented Generation), Few-Shot Learning, and BERT, to provide users with a virtual consultant capable of answering queries, simulating scenarios, and providing insights based on real-world data. The system also incorporates an InsightBot for generating in-depth data analysis and an interactive dashboard for visualizing key metrics.
 
-![DecisivAI Architecture](./path_to_image)
-
 ## Key Features
 
 ### 1. **Virtual Consultant**
@@ -47,24 +45,28 @@ This project leverages advanced AI models, including RAG (Retrieval-Augmented Ge
 |----------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Visualization         | Displays bar charts to help users grasp key trends and statistics in a user-friendly format using **ReCharts.js**.          |
 
+## Project Architecture
+![image](https://github.com/user-attachments/assets/425d3a81-8d7a-4873-847d-444483202bfb)
+
+
 ## How It Works
 
-1. **Input**: Users provide data related to the business, including sales, customer, inventory, and marketing data.
-2. **Data Categorization**: The InsightBot processes the input data, splitting it into categorical and numerical values.
-3. **Model Interaction**:
+1. **Input**: Users provide data related to the business, including sales, customer, inventory, and marketing data. Further, this data gets stored in the VectorDB.
+2. **Model Interaction**:
    - The AI model, fine-tuned through feedback and scenario simulations, retrieves relevant data from the VectorDB and applies RAG, Few-Shot Learning, and BERT to generate precise answers and insights.
-4. **Insights Generation**: The system presents the output in a tabular format or as interactive bar charts on the dashboard.
-5. **Feedback Loop**: Users can provide feedback to enhance the model's performance, leading to better results in the future.
+3. **Data Categorization**: The InsightBot processes the input data, splitting it into categorical and numerical values.
+4. **Grouped Analysis**: The categorized data is then used to calculate the minimum, maximum, average and sum of each numerical column for individual categorical data. This calcualted data is again stored into the VectorDB. 
+5. **Insights Generation**: The system presents the output in a tabular format and interactive bar charts on the dashboard.
+6. **Feedback Loop**: Users can provide feedback to enhance the model's performance, leading to better results in the future.
 
 ## Technology Stack
 
 | Technology        | Description                                                                                                                     |
 |-------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| **Frontend**       | React.js                                                                                                                        |
-| **Backend**        | Flask                                                                                                                           |
-| **AI Models**      | RAG, Few-Shot, BERT                                                                                                             |
-| **Database**       | VectorDB                                                                                                                        |
-| **Data Visualization**| ReCharts.js                                                                                                                   |
-| **Socket.io**      | For real-time interactions                                                                                                      |
-| **ChromaDB**       | For feedback storage                                                                                                            |
+| **Frontend**       | React.js, JavaScript                                                                                                           |
+| **Backend**        | Flask, Python                                                                                                                  |
+| **AI Models**      | RAG, LangChain, BERT                                                                                                           |
+| **Database**       | VectorDB                                                                                                                       |
+| **Data Visualization**| ReCharts.js                                                                                                                 |
+
 
