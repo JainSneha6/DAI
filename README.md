@@ -149,12 +149,8 @@ flowchart LR
 
 ## Technology Comparison of DecisivAI with other alternatives
 
-| **Technology**         | **DecisivAI Approach**                                               | **Alternative Solutions**                                      | **Key Advantages of DecisivAI**                                 |
-|------------------------|---------------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
-| **AI Model**           | RAG (Retrieval-Augmented Generation), Few-Shot Learning, BERT       | Traditional Machine Learning Models                            | Combines **real-time data retrieval** with **contextual accuracy** and minimal data training. |
-| **Data Storage**       | VectorDB for fast retrieval of business-specific data               | Relational Databases (SQL), NoSQL Databases (MongoDB)           | Optimized for **vector-based search** and **real-time insights** from complex business datasets. |
-| **Insight Delivery**    | InsightBot with ReCharts.js for real-time, interactive visualizations | Static Reporting Dashboards (Power BI, Tableau)                | Provides **dynamic insights** with **custom simulations** and real-time feedback integration. |
-| **Scenario Simulation** | AI-driven scenario simulation for predictive analysis              | Manual scenario planning or rule-based simulations (Excel)      | Offers **AI-powered predictions** with **data-driven scenarios**, eliminating guesswork. |
+![image](https://github.com/user-attachments/assets/fa5f3cfe-5f16-400b-8ac8-f93c04d1cc18)
+
 
 
 ## Impact & Benefits
