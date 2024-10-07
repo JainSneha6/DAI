@@ -69,6 +69,21 @@ This project leverages advanced AI models, including RAG (Retrieval-Augmented Ge
 | **Database**       | VectorDB                                                                                                                       |
 | **Data Visualization**| ReCharts.js                                                                                                                 |
 
+
+## Detailed Explanation of why we preferred these specific Technologies
+
+| **Technology**         | **Purpose**                                                                                           | **Why We Chose It**                                                                                                                 |
+|------------------------|-------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| **RAG (Retrieval-Augmented Generation)** | To enhance the AI's ability to retrieve relevant information from business-specific documents and industry trends.            | Combines **document retrieval** with **natural language understanding**, ensuring **contextual relevance** for business decision-making. |
+| **Few-Shot Learning**  | Enables the AI to generalize insights with minimal training data.                                      | Allows the model to **adapt quickly** to new business scenarios without the need for extensive data, offering **scalability** and **flexibility**. |
+| **BERT (Bidirectional Encoder Representations from Transformers)** | Improves the understanding of user queries and enhances NLP capabilities.                          | **BERT’s bidirectional processing** provides a deeper understanding of user queries, resulting in **more accurate insights** from business data. |
+| **VectorDB (ChromaDB)**| Stores vectorized business-specific data for efficient retrieval during insights and query processing.  | **Optimized for AI-driven retrieval**, allowing fast access to complex data points, ideal for real-time business decision-making.   |
+| **ReCharts.js**        | Used for creating dynamic and interactive visualizations on the dashboard.                             | **Lightweight, flexible**, and well-suited for React-based applications, ReCharts.js allows **real-time data visualization** with minimal performance overhead. |
+| **Flask (Backend)**    | Handles backend operations, API endpoints, and integrates with AI models.                             | **Lightweight and highly customizable**, Flask is ideal for building **scalable, API-driven applications** with **low latency** for real-time responses. |
+| **React.js (Frontend)**| Powers the interactive and responsive user interface for the dashboard and query input.                | **Component-based structure**, easy state management, and fast rendering make React.js ideal for building **dynamic, real-time UIs**. |
+| **LangChain**          | To manage complex LLM operations and enable seamless communication between the AI models and data.     | **Specialized for LLM orchestration**, LangChain simplifies the process of integrating **multiple AI models** and managing **complex workflows**. |
+
+
 ## Technology Comparison of DecisivAI with other alternatives
 
 | **Technology**         | **DecisivAI Approach**                                               | **Alternative Solutions**                                      | **Key Advantages of DecisivAI**                                 |
