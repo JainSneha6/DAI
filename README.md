@@ -19,10 +19,11 @@ This project leverages advanced AI models, including RAG (Retrieval-Augmented Ge
 
 ### 2. **InsightBot**
 
-| Data Type          | Analysis Features                                                                                                          |
+| Feature      | Description                                                                                                        |
 |--------------------|----------------------------------------------------------------------------------------------------------------------------|
 | **Categorical Data**| Unique values, most common values, and frequency of specific fields.                                                       |
 | **Numerical Data**  | Provides minimum, maximum, sum, and mean values for numerical metrics.                                                     |
+| **Grouped Analysis**   |Provides all the necessary analysis of numerical data for each categorical variable                                  |
 | **Visualization**   | Integrates with ReCharts.js to display bar charts for easy data visualization.                                             |
 
 ### 3. **Scenario Simulation**
