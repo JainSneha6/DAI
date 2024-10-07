@@ -135,18 +135,20 @@ flowchart LR
 
 
 ## Project Architecture
-![image](https://github.com/user-attachments/assets/425d3a81-8d7a-4873-847d-444483202bfb)
+![image](https://github.com/user-attachments/assets/9832b6bf-8ce5-4e39-a9a6-537318e42d83)
+
 
 
 ## How It Works
 
-1. **Input**: Users provide data related to the business, including sales, customer, inventory, and marketing data. Further, this data gets stored in the VectorDB.
-2. **Model Interaction**:
-   - The AI model, fine-tuned through feedback and scenario simulations, retrieves relevant data from the VectorDB and applies RAG, Few-Shot Learning, and BERT to generate precise answers and insights.
-3. **Data Categorization**: The InsightBot processes the input data, splitting it into categorical and numerical values.
-4. **Grouped Analysis**: The categorized data is then used to calculate the minimum, maximum, average and sum of each numerical column for individual categorical data. This calcualted data is again stored into the VectorDB. 
-5. **Insights Generation**: The system presents the output in a tabular format and interactive bar charts on the dashboard.
-6. **Feedback Loop**: Users can provide feedback to enhance the model's performance, leading to better results in the future.
+| **Step**            | **Description**                                                                                                                                                       |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Input**           | Users provide data related to the business, including sales, customer, inventory, and marketing data. This data is stored in the VectorDB.                              |
+| **Model Interaction**| The AI model, fine-tuned through feedback and scenario simulations, retrieves relevant data from the VectorDB and applies RAG, Few-Shot Learning, and BERT to generate precise answers and insights. |
+| **Data Categorization** | The InsightBot processes the input data, splitting it into categorical and numerical values.                                                                         |
+| **Grouped Analysis** | The categorized data is used to calculate the minimum, maximum, average, and sum of each numerical column for individual categorical data. The calculated data is then stored in the VectorDB. |
+| **Insights Generation** | The system presents the output in a tabular format and interactive bar charts on the dashboard.                                                                        |
+| **Feedback Loop**   | Users can provide feedback to enhance the model's performance, leading to better results in the future.                                                                  |
 
 ## Technology Stack
 
@@ -166,22 +168,7 @@ flowchart LR
 ## Key Benefits of Our AI-Powered Decision-Making Platform
 
 ![image](https://github.com/user-attachments/assets/7c80b97c-c27b-4740-96e8-3d9177d60c48)
-Our platform is designed to provide businesses with actionable insights, enhance decision-making accuracy, and drive operational efficiency. Here are some of the main advantages that users can expect when implementing our system:
 
-1. **Enhanced Decision-Making Accuracy**:  
-   By leveraging advanced AI models such as RAG, Few-Shot Learning, and BERT, our platform delivers highly precise insights. This helps businesses make informed decisions with up to 85% greater accuracy, especially in real-time scenarios.
-
-2. **Time Efficiency**:  
-   The platform automates data analysis and scenario simulations, reducing the manual effort typically required. This enables organizations to save between 40-60% of the time they would usually spend on these tasks, allowing them to focus on more critical business operations.
-
-3. **Actionable Insights**:  
-   With our **InsightBot**, users receive clear, easy-to-understand insights that are directly relevant to their business data. This helps decision-makers quickly identify opportunities and risks, improving the quality of decisions by 70%.
-
-4. **Cost Reduction**:  
-   Our system optimizes business operations by minimizing unnecessary expenses. Through data-driven strategies, companies can expect potential savings of 20-30% in operational costs.
-
-5. **Scalable Customization**:  
-   As your business grows, so does our platform. With continuous feedback integration, the system fine-tunes its responses over time, providing increasingly tailored insights. Users can enjoy up to 30% more accurate responses after feedback, ensuring the platform stays relevant to evolving business needs.
 
 
 
