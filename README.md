@@ -69,7 +69,7 @@ This project leverages advanced AI models, including RAG (Retrieval-Augmented Ge
 | **Database**       | VectorDB                                                                                                                       |
 | **Data Visualization**| ReCharts.js                                                                                                                 |
 
-## Technology of DecisivAI with other alternatives
+## Technology Comparison of DecisivAI with other alternatives
 
 | **Technology**         | **DecisivAI Approach**                                               | **Alternative Solutions**                                      | **Key Advantages of DecisivAI**                                 |
 |------------------------|---------------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
