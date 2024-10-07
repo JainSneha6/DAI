@@ -2,6 +2,27 @@
 
 DecisivAI is an AI-powered platform designed to help businesses make informed decisions through data analysis, scenario simulation, and interactive insights. This platform integrates advanced machine learning models, natural language processing, and real-time business data visualization to empower enterprises with actionable insights.
 
+## Introduction 
+
+![image](https://github.com/user-attachments/assets/06f6caad-8db7-416c-b7f7-3fd088110201)
+
+As businesses navigate increasingly complex environments, leveraging AI to make informed decisions is becoming essential. Studies show that:
+
+- **97%** of companies believe AI will help their business.
+- **46%** have already begun using AI in some capacity.
+- **64%** of companies recognize that AI can improve customer relationships.
+
+These statistics highlight the critical role AI will play in decision-making in the coming years. Traditional methods for business decision-making are likely to fall short in this new landscape, as the sheer volume of data and the need for timely insights outpace human analysis capabilities.
+
+### Key Points:
+
+- **AI & Large Language Models (LLMs)**: LLMs, such as the models used in DecisivAI, have the potential to process vast quantities of company data, providing valuable insights that drive business strategies and operations.
+  
+- **RAG (Retrieval-Augmented Generation)**: This model refines the decision-making process by combining external knowledge with AI's ability to retrieve relevant, real-time data. It enables the system to generate accurate insights, tailored to specific business contexts.
+
+By utilizing these cutting-edge technologies, **DecisivAI** empowers businesses to stay ahead of the competition, make informed decisions faster, and foster stronger customer relationships.
+
+
 ## Overview
 
 This project leverages advanced AI models, including RAG (Retrieval-Augmented Generation), Few-Shot Learning, and BERT, to provide users with a virtual consultant capable of answering queries, simulating scenarios, and providing insights based on real-world data. The system also incorporates an InsightBot for generating in-depth data analysis and an interactive dashboard for visualizing key metrics.
