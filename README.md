@@ -52,11 +52,30 @@ flowchart LR
 | **Grouped Analysis**   |Provides all the necessary analysis of numerical data for each categorical variable                                  |
 | **Visualization**   | Integrates with ReCharts.js to display bar charts for easy data visualization.                                             |
 
+
+```mermaid
+flowchart LR
+    A[Categorical Data] --- B[Unique & Most Common Values]
+    A --- C[Frequency Analysis]
+    D[Numerical Data] --- E[Min & Max Values]
+    D --- F[Sum & Mean Values]
+    G[Grouped Analysis] --- H[Analysis per Categorical Variable]
+    I[Visualization] --- J[Bar Charts with ReCharts.js]
+```
+
 ### 3. **Scenario Simulation**
 
 | Scenario Simulation | Description                                                                                                               |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------|
 | Real-World Scenarios | Simulates real-world business scenarios and fine-tunes the AI models to provide better answers based on evolving trends.   |
+
+```mermaid
+flowchart LR
+    A[Real-World Scenarios] --- B[Simulate Business Scenarios]
+    B --- C[Analyze Trends]
+    C --- D[Fine-Tune AI Models]
+    D --- E[Provide Better Answers]
+```
 
 ### 4. **AI-Powered Models**
 
@@ -67,11 +86,27 @@ flowchart LR
 | **Few-Shot Learning**| Allows the model to generalize answers with minimal additional data training.                                              |
 | **BERT**            | A natural language processing model that improves the system's ability to understand user queries and generate insights.    |
 
+```mermaid
+flowchart LR
+    A[VectorDB] --- B[Store Business Data & Trends]
+    C[RAG] --- D[Enhance Answers with External Resources]
+    E[Few-Shot Learning] --- F[Generalize Answers with Minimal Data]
+    G[BERT] --- H[Improve Query Understanding & Insights]
+```
+
 ### 5. **Interactive Dashboard**
 
 | Feature              | Description                                                                                                                |
 |----------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Visualization         | Displays bar charts to help users grasp key trends and statistics in a user-friendly format using **ReCharts.js**.          |
+
+```mermaid
+flowchart LR
+    A[Data Input] --- B[Process Data]
+    B --- C[Generate Bar Charts]
+    C --- D[Display in User-Friendly Format]
+    D --- E[Users Grasp Key Trends & Statistics]
+```
 
 ## Project Architecture
 ![image](https://github.com/user-attachments/assets/425d3a81-8d7a-4873-847d-444483202bfb)
