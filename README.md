@@ -36,6 +36,13 @@ This project leverages advanced AI models, including RAG (Retrieval-Augmented Ge
 | Query & Answer       | Users can ask the virtual consultant business-related questions, and the system will return relevant insights.                               |
 | Feedback Integration | Users can provide feedback to improve the quality of the answers over time, allowing the system to fine-tune and enhance its responses.       |
 
+```mermaid
+flowchart LR
+    A[User Inputs Query] --> B[Virtual Consultant Answers]
+    B --> C[User Provides Feedback]
+    C --> D[Model Improves Accuracy]
+```
+
 ### 2. **InsightBot**
 
 | Feature      | Description                                                                                                        |
