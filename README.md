@@ -2,6 +2,28 @@
 
 DecisivAI is an AI-powered platform designed to help businesses make informed decisions through data analysis, scenario simulation, and interactive insights. This platform integrates advanced machine learning models, natural language processing, and real-time business data visualization to empower enterprises with actionable insights.
 
+## Table of Contents
+
+| **Section**                                                                | **Description**                                       |
+|----------------------------------------------------------------------------|-------------------------------------------------------|
+| [Introduction](#introduction)                                               | Overview of AI's role in business decision-making.     |
+| [Overview](#overview)                                                       | General project description and key insights.          |
+| **Key Features**                                                            |                                                       |
+| &nbsp;&nbsp;&nbsp; [1. Virtual Consultant](#1-virtual-consultant)           | Virtual assistant for business queries and insights.   |
+| &nbsp;&nbsp;&nbsp; [2. InsightBot](#2-insightbot)                           | Automated data analysis and visualization tool.        |
+| &nbsp;&nbsp;&nbsp; [3. Scenario Simulation](#3-scenario-simulation)         | Simulate and analyze business scenarios.               |
+| &nbsp;&nbsp;&nbsp; [4. AI-Powered Models](#4-ai-powered-models)             | LLM, RAG, Few-Shot Learning, BERT, Sentiment Analysis. |
+| &nbsp;&nbsp;&nbsp; [5. Interactive Dashboard](#5-interactive-dashboard)     | Visual display of key metrics and insights.            |
+| &nbsp;&nbsp;&nbsp; [6. Sentiment Analysis for Feedback](#6-sentiment-analysis-for-feedback) | Enhancing models with user sentiment.                  |
+| [Solution Overview](#solution-overview)                                     | Visual snapshots and project layout.                   |
+| [Project Architecture](#project-architecture)                               | Technical architecture of the system.                  |
+| [How It Works](#how-it-works)                                               | Step-by-step explanation of the system workflow.       |
+| [Snapshots of Our Project](#snapshots-of-our-project)                       | Screenshots showing platform features.                 |
+| [Demo Video](#demo-video)                                                   | Link to the project demo video.                        |
+| [Technology Stack](#technology-stack)                                       | Tools and technologies used in the project.            |
+| [Technology Comparison of DecisivAI with Other Alternatives](#technology-comparison-of-decisivai-with-other-alternatives) | Comparison with other solutions.                      |
+| [Key Benefits of Our AI-Powered Decision-Making Platform](#key-benefits-of-our-ai-powered-decision-making-platform) | Major advantages of DecisivAI.                         |
+
 ## Introduction 
 
 ![image](https://github.com/user-attachments/assets/06f6caad-8db7-416c-b7f7-3fd088110201)
@@ -149,6 +171,25 @@ flowchart LR
 | **Grouped Analysis** | The categorized data is used to calculate the minimum, maximum, average, and sum of each numerical column for individual categorical data. The calculated data is then stored in the VectorDB. |
 | **Insights Generation** | The system presents the output in a tabular format and interactive bar charts on the dashboard.                                                                        |
 | **Feedback Loop**   | Users can provide feedback to enhance the model's performance, leading to better results in the future.                                                                  |
+
+
+## Snapshots of our Project
+
+![Screenshot 2024-10-13 155322](https://github.com/user-attachments/assets/f4040595-4a0d-4c2c-b342-870616f3c8b7)
+![Screenshot 2024-10-13 155335](https://github.com/user-attachments/assets/6b449be9-381e-4e1b-93e2-98581dcd5545)
+![Screenshot 2024-10-13 155928](https://github.com/user-attachments/assets/7bc05ad3-ae3b-4c2c-8850-9ab9b84cdb2a)
+![Screenshot 2024-10-13 155945](https://github.com/user-attachments/assets/7c9086c7-11f1-4ae2-a969-64e8956ef42a)
+![Screenshot 2024-10-13 160035](https://github.com/user-attachments/assets/b02cf030-a013-40df-80dc-978656a1012a)
+![Screenshot 2024-10-13 160358](https://github.com/user-attachments/assets/2c671771-1f7c-4eb8-bc47-d936708c1dab)
+
+
+## Demo Video
+
+Project Demo Video Link - https://youtu.be/fQVhEspreRc
+
+
+
+
 
 ## Technology Stack
 
