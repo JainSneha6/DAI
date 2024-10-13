@@ -1,4 +1,4 @@
-# DecisivAI: Business Decision-Making Platform
+# DecisivAI - An AI-Powered Enterprise Decision-Making System
 
 DecisivAI is an AI-powered platform designed to help businesses make informed decisions through data analysis, scenario simulation, and interactive insights. This platform integrates advanced machine learning models, natural language processing, and real-time business data visualization to empower enterprises with actionable insights.
 
