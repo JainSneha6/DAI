@@ -36,6 +36,50 @@ As businesses navigate increasingly complex environments, leveraging AI to make 
 
 These statistics highlight the critical role AI will play in decision-making in the coming years. Traditional methods for business decision-making are likely to fall short in this new landscape, as the sheer volume of data and the need for timely insights outpace human analysis capabilities.
 
+## Backend Setup (Flask)
+
+### 1. Clone the Repository
+
+```sh
+git clone https://github.com/JainSneha6/DecisivAI.git
+cd DecisivAI/backend
+```
+### 2. Create a Virtual Environment (Optional but Recommended)
+
+```sh
+python -m venv venv
+source venv/bin/activate  # On macOS/Linux
+venv\Scripts\activate  # On Windows
+```
+### 3. Install Dependencies
+
+```sh
+pip install -r requirements.txt
+```  
+### 4. Run the Flask Server
+
+```sh
+python app.py
+```
+
+## Frontend Setup (React)
+
+### 1. Navigate to the Frontend Folder
+
+```sh
+cd ../frontend
+```
+### 2. Install Dependencies
+
+```sh
+npm install
+```  
+### 3. Start the React App
+
+```sh
+npm start
+```
+
 ### Key Points:
 
 - **AI & Large Language Models (LLMs)**: LLMs, such as the models used in DecisivAI, have the potential to process vast quantities of company data, providing valuable insights that drive business strategies and operations.
