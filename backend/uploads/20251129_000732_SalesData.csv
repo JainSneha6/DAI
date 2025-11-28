@@ -1,0 +1,101 @@
+Order ID,Customer ID,Product Name,Product Category,Sales Region,Quantity Sold,Unit Price,Total Sales,Discount Applied,Sales Channel,Payment Method,Customer Segment,Profit Margin,Return Status
+12345,67890,Smartwatch,Electronics,North America,2,99.99,199.98,0,Online,Credit Card,Regular,0.15,No
+67890,12345,Running Shoes,Clothing,Europe,4,59.99,239.96,0.1,In-store,Cash,VIP,0.12,No
+34567,89012,Laptop,Electronics,Asia,1,899.99,899.99,0,Third-party,PayPal,New Customer,0.1,Yes
+90123,45678,Smartphone,Electronics,South America,3,699.99,2099.97,0.05,Online,Credit Card,Regular,0.13,No
+56789,23456,Cookware Set,Home Goods,Africa,5,49.99,249.95,0,In-store,Cash,VIP,0.11,No
+34567,89012,TV,Electronics,North America,2,999.99,1999.98,0,Third-party,PayPal,New Customer,0.09,Yes
+90123,45678,Gaming Console,Electronics,Europe,1,799.99,799.99,0,Online,Credit Card,Regular,0.14,No
+56789,23456,Furniture Set,Home Goods,Asia,4,299.99,1199.96,0,In-store,Cash,VIP,0.08,No
+12345,67890,Wearable Device,Electronics,South America,3,199.99,599.97,0.05,Online,Credit Card,Regular,0.16,Yes
+67890,12345,Fashion Handbag,Clothing,Africa,2,99.99,199.98,0,In-store,Cash,VIP,0.12,No
+34567,89012,Kitchen Appliance,Home Goods,North America,5,49.99,249.95,0,Third-party,PayPal,New Customer,0.11,No
+90123,45678,Smart Speaker,Electronics,Europe,1,149.99,149.99,0,Online,Credit Card,Regular,0.1,Yes
+56789,23456,Home Decor,Home Goods,Asia,4,99.99,399.96,0,In-store,Cash,VIP,0.09,No
+12345,67890,Fitness Tracker,Electronics,South America,2,79.99,159.98,0.05,Online,Credit Card,Regular,0.13,Yes
+67890,12345,Fashion Shoes,Clothing,Africa,3,59.99,179.97,0,In-store,Cash,VIP,0.12,No
+34567,89012,Coffee Maker,Home Goods,North America,1,49.99,49.99,0,Third-party,PayPal,New Customer,0.11,Yes
+90123,45678,Gaming Headset,Electronics,Europe,2,99.99,199.98,0,Online,Credit Card,Regular,0.1,No
+56789,23456,Bedding Set,Home Goods,Asia,5,29.99,149.95,0,In-store,Cash,VIP,0.09,Yes
+12345,67890,Smart Home Device,Electronics,South America,1,199.99,199.99,0,Online,Credit Card,Regular,0.08,No
+67890,12345,Fashion Handbag,Clothing,Africa,4,99.99,399.96,0,In-store,Cash,VIP,0.07,Yes
+34567,89012,Smartwatch,Electronics,North America,3,99.99,299.97,0,Third-party,PayPal,New Customer,0.06,No
+23456,90123,Laptop,Electronics,Europe,1,1299.99,1299.99,0.05,Online,Credit Card,Regular,0.15,No
+89012,45678,Kitchen Appliances,Home Goods,Asia,2,49.99,99.98,0,In-store,Cash,VIP,0.14,Yes
+56789,23456,Smart Speaker,Electronics,South America,4,99.99,399.96,0,Online,Credit Card,Regular,0.13,No
+12345,67890,Fashion Accessories,Clothing,Africa,1,29.99,29.99,0,In-store,Cash,VIP,0.12,Yes
+67890,12345,Coffee Table,Home Goods,North America,3,299.99,899.97,0.05,Third-party,PayPal,New Customer,0.11,No
+34567,89012,Gaming Console,Electronics,Europe,2,499.99,999.98,0,Online,Credit Card,Regular,0.1,Yes
+90123,45678,Bedding Set,Home Goods,Asia,5,29.99,149.95,0,In-store,Cash,VIP,0.09,No
+56789,23456,Fitness Equipment,Electronics,South America,1,199.99,199.99,0,Online,Credit Card,Regular,0.08,Yes
+12345,67890,Home Decor,Home Goods,Africa,4,99.99,399.96,0,In-store,Cash,VIP,0.07,No
+67890,12345,Fashion Watch,Clothing,North America,3,99.99,299.97,0,Third-party,PayPal,New Customer,0.06,Yes
+34567,89012,Gaming Keyboard,Electronics,Europe,2,99.99,199.98,0,Online,Credit Card,Regular,0.05,No
+90123,45678,Coffee Mug,Home Goods,Asia,5,19.99,99.95,0,In-store,Cash,VIP,0.04,Yes
+56789,23456,Smart Glasses,Electronics,South America,1,299.99,299.99,0,Online,Credit Card,Regular,0.03,No
+12345,67890,Fashion Scarf,Clothing,Africa,4,29.99,119.96,0,In-store,Cash,VIP,0.02,Yes
+67890,12345,Kitchen Utensils,Home Goods,North America,3,49.99,149.97,0,Third-party,PayPal,New Customer,0.01,No
+34567,89012,Fitness Tracker,Electronics,Europe,2,79.99,159.98,0,Online,Credit Card,Regular,0,Yes
+90123,45678,Fashion Shoes,Clothing,Asia,1,59.99,59.99,0,In-store,Cash,VIP,-0.01,No
+56789,23456,Coffee Maker,Home Goods,South America,5,49.99,249.95,0,Online,Credit Card,Regular,-0.02,Yes
+12345,67890,Gaming Headset,Electronics,Africa,3,99.99,299.97,0,In-store,Cash,VIP,-0.03,No
+67890,12345,Bedding Set,Home Goods,North America,2,29.99,59.98,0,Third-party,PayPal,New Customer,-0.04,Yes
+34567,89012,Smart Home Device,Electronics,Europe,4,199.99,799.96,0,Online,Credit Card,Regular,-0.05,No
+102030,111111,Wireless Earbuds,Electronics,Asia,6,49.99,299.94,0,In-store,Cash,VIP,0.01,Yes
+202020,222222,Travel Bag,Home Goods,South America,7,29.99,209.93,0,Online,Credit Card,Regular,0.02,No
+303030,333333,Smartwatch,Electronics,Europe,8,79.99,639.92,0,Third-party,PayPal,New Customer,0.03,Yes
+404040,444444,Fragrance Set,Clothing,North America,9,59.99,539.91,0,In-store,Cash,VIP,0.04,No
+505050,555555,Coffee Maker,Home Goods,Africa,10,49.99,499.9,0,Online,Credit Card,Regular,0.05,Yes
+606060,666666,Fitness Tracker,Electronics,Asia,11,79.99,879.89,0,Third-party,PayPal,New Customer,0.06,No
+707070,777777,Fashion Scarf,Clothing,South America,12,29.99,359.88,0,In-store,Cash,VIP,0.07,Yes
+808080,888888,Gaming Headset,Electronics,Europe,13,99.99,1299.87,0,Online,Credit Card,Regular,0.08,No
+909090,999999,Bedding Set,Home Goods,North America,14,29.99,419.86,0,Third-party,PayPal,New Customer,0.09,Yes
+1010101,1111111,Smart Home Device,Electronics,Africa,15,199.99,2999.85,0,In-store,Cash,VIP,0.1,No
+1111111,2222222,Wireless Earbuds,Electronics,Asia,16,49.99,799.84,0,Online,Credit Card,Regular,0.11,Yes
+1212121,3333333,Travel Bag,Home Goods,South America,17,29.99,509.83,0,Third-party,PayPal,New Customer,0.12,No
+1313131,4444444,Smartwatch,Electronics,Europe,18,79.99,1439.82,0,In-store,Cash,VIP,0.13,Yes
+1414141,5555555,Fragrance Set,Clothing,North America,19,59.99,1139.81,0,Online,Credit Card,Regular,0.14,No
+1515151,6666666,Coffee Maker,Home Goods,Africa,20,49.99,999.8,0,Third-party,PayPal,New Customer,0.15,Yes
+1616161,7777777,Fitness Tracker,Electronics,Asia,21,79.99,1679.79,0,In-store,Cash,VIP,0.16,No
+1717171,8888888,Fashion Scarf,Clothing,South America,22,29.99,659.78,0,Online,Credit Card,Regular,0.17,Yes
+1818181,9999999,Gaming Headset,Electronics,Europe,23,99.99,2299.77,0,Third-party,PayPal,New Customer,0.18,No
+1919191,11111111,Bedding Set,Home Goods,North America,24,29.99,719.76,0,In-store,Cash,VIP,0.19,Yes
+2020202,22222222,Smart Home Device,Electronics,Africa,25,199.99,4999.75,0,Online,Credit Card,Regular,0.2,No
+2030303,33333333,Wireless Earbuds,Electronics,Asia,26,149.99,3899.74,0,In-store,Cash,VIP,0.21,Yes
+2131313,44444444,Travel Bag,Clothing,South America,27,49.99,1354.73,0,Online,Credit Card,Regular,0.22,No
+2232323,555555555,Smart Speaker,Electronics,Europe,28,99.99,2799.72,0,Third-party,PayPal,New Customer,0.23,Yes
+2333333,666666666,Fashion Dress,Clothing,North America,29,39.99,1158.71,0,In-store,Cash,VIP,0.24,No
+2434344,777777777,Gaming Keyboard,Electronics,Asia,30,129.99,3899.7,0,Online,Credit Card,Regular,0.25,Yes
+2535355,888888888,Home Decor,Home Goods,South America,31,29.99,927.69,0,Third-party,PayPal,New Customer,0.26,No
+2636363,999999999,Fitness Equipment,Home Goods,Europe,32,79.99,2559.68,0,In-store,Cash,VIP,0.27,Yes
+2737474,1111111111,Wireless Mouse,Electronics,North America,33,39.99,1323.67,0,Online,Credit Card,Regular,0.28,No
+2838484,2222222222,Fashion Accessories,Clothing,Africa,34,59.99,2037.66,0,Third-party,PayPal,New Customer,0.29,Yes
+2939494,3333333333,Smart Home Hub,Electronics,Asia,35,199.99,6999.65,0,In-store,Cash,VIP,0.3,No
+3030505,4444444444,Home Furniture,Home Goods,South America,36,49.99,1804.64,0,Online,Credit Card,Regular,0.31,Yes
+3131515,5555555555,Gaming Console,Electronics,Europe,37,129.99,4799.63,0,Third-party,PayPal,New Customer,0.32,No
+3232525,6666666666,Fashion Jewelry,Clothing,North America,38,29.99,1137.62,0,In-store,Cash,VIP,0.33,Yes
+3333533,7777777777,Smart Thermostat,Electronics,Asia,39,199.99,7799.61,0,Online,Credit Card,Regular,0.34,No
+3434544,8888888888,Home Appliances,Home Goods,South America,40,49.99,1999.6,0,Third-party,PayPal,New Customer,0.35,Yes
+3535555,9999999999,Fitness Tracker,Electronics,Europe,41,79.99,3279.59,0,In-store,Cash,VIP,0.36,No
+3636666,11111111111,Fashion Handbag,Clothing,North America,42,39.99,1677.58,0,Online,Credit Card,Regular,0.37,Yes
+3737777,22222222222,Smart Speaker,Electronics,Africa,43,99.99,4319.57,0,Third-party,PayPal,New Customer,0.38,No
+3838888,33333333333,Home Decor,Home Goods,Asia,44,29.99,1319.56,0,In-store,Cash,VIP,0.39,Yes
+3939399,44444444444,Gaming Keyboard,Electronics,South America,45,129.99,5859.55,0,Online,Credit Card,Regular,0.4,No
+4040404,55555555555,Tablet PC,Electronics,Europe,46,199.99,9194.94,0,Third-party,PayPal,New Customer,0.41,Yes
+4141414,66666666666,Smartwatch,Electronics,North America,47,149.99,7047.49,0,In-store,Cash,VIP,0.42,No
+4242424,7.77778E+11,Home Theater System,Home Goods,Asia,48,299.99,14400.96,0,Online,Credit Card,Regular,0.43,Yes
+4343434,8.88889E+11,Wireless Headphones,Electronics,South America,49,79.99,3919.51,0,Third-party,PayPal,New Customer,0.44,No
+4444444,1E+12,Kitchen Appliances,Home Goods,Europe,50,49.99,2499.5,0,In-store,Cash,VIP,0.45,Yes
+4545455,1.11111E+12,Fitness Equipment,Home Goods,North America,51,199.99,10199.49,0,Online,Credit Card,Regular,0.46,No
+4646466,2.22222E+12,Smart Home Security,Electronics,Asia,52,299.99,15519.88,0,Third-party,PayPal,New Customer,0.47,Yes
+4747477,3.33333E+12,Fashion Shoes,Clothing,South America,53,39.99,2122.47,0,In-store,Cash,VIP,0.48,No
+4848488,4.44444E+12,Gaming Console,Electronics,Europe,54,499.99,27099.66,0,Online,Credit Card,Regular,0.49,Yes
+4949499,5.55556E+12,Home Security System,Home Goods,North America,55,299.99,16549.45,0,Third-party,PayPal,New Customer,0.5,No
+5050505,6.66667E+13,Smart Bike Lock,Electronics,Asia,56,99.99,5599.44,0,In-store,Cash,VIP,0.51,Yes
+5151515,7.77778E+13,Furniture,Home Goods,South America,57,49.99,2848.43,0,Online,Credit Card,Regular,0.52,No
+5252525,8.88889E+13,Smart Water Bottle,Electronics,Europe,58,29.99,1734.42,0,Third-party,PayPal,New Customer,0.53,Yes
+5353535,1E+14,Fitness Tracker,Electronics,North America,59,79.99,4699.41,0,In-store,Cash,VIP,0.54,No
+5454545,1.11111E+14,Home Theater System,Home Goods,Asia,60,299.99,17999.4,0,Online,Credit Card,Regular,0.55,Yes
+5555555,2.22222E+14,Wireless Earbuds,Electronics,South America,61,129.99,7899.59,0,Third-party,PayPal,New Customer,0.56,No
+5656566,3.33333E+14,Fashion Accessories,Clothing,Europe,62,39.99,2482.38,0,In-store,Cash,VIP,0.57,Yes
+4949600,5.55556E+12,Portable Power Bank,Electronics,North America,63,49.99,3149.97,0,Online,Credit Card,Regular,0.58,No
