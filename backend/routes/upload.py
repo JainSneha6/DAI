@@ -21,7 +21,7 @@ def upload_files():
         return jsonify({"success": False, "error": "No files uploaded"}), 400
 
     results = []
-    upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(os.getcwd(), "backend", "uploads"))
+    upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(os.getcwd(),"uploads"))
     os.makedirs(upload_folder, exist_ok=True)
 
     for f in uploaded_files:
