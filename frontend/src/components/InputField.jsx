@@ -144,18 +144,15 @@ function FileInputField({
         </button>
       </div>
 
-      {/* Upload status message */}
       {uploadStatus && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`mt-4 p-3 rounded-lg text-sm ${
-            uploadStatus.type === "success"
-              ? "bg-green-500/20 text-green-200 border border-green-500/30"
-              : "bg-red-500/20 text-red-200 border border-red-500/30"
-          }`}
+          className="mt-4 p-3 rounded-lg text-sm bg-white/4 text-slate-200 border border-white/6"
         >
-          {uploadStatus.message}
+          {typeof uploadStatus === "string"
+            ? uploadStatus
+            : uploadStatus?.message ?? JSON.stringify(uploadStatus)}
         </motion.div>
       )}
     </div>

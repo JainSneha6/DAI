@@ -3,7 +3,19 @@ import { motion } from "framer-motion";
 import FileInputField from "../components/InputField.jsx";
 import { useDragAndDrop } from "../hooks/useDragAndDrop.js";
 import { useFileSelection } from "../hooks/useFileSelection.js";
-import { useFileUpload } from "../hooks/useFileUpload.js";
+import useFileUpload from "../hooks/useFileUpload.js";
+
+const MODEL_CATEGORIES = [
+  "Auto-detect (Best-fit)",
+  "Sales, Demand & Financial Forecasting Model",
+  "Pricing & Revenue Optimization Model",
+  "Marketing ROI & Attribution Model",
+  "Customer Segmentation & Modeling",
+  "Customer Value & Retention Model",
+  "Sentiment & Intent NLP Model",
+  "Inventory & Replenishment Optimization Model",
+  "Logistics & Supplier Risk Model",
+];
 
 export default function DecisivAIUploadPage() {
   const [files, setFiles] = useState([]);
@@ -12,6 +24,8 @@ export default function DecisivAIUploadPage() {
 
   const { onFilesSelected: addFiles } = useFileSelection();
   const { handleUpload, uploading, uploadStatus } = useFileUpload();
+
+  const [modelType, setModelType] = useState(MODEL_CATEGORIES[0]);
 
   const handleFilesSelected = useCallback(
     (selectedFiles) => {
@@ -26,11 +40,12 @@ export default function DecisivAIUploadPage() {
   );
 
   const handleUploadClick = useCallback(async () => {
-    const success = await handleUpload(files);
+    const selectedModel = modelType === MODEL_CATEGORIES[0] ? null : modelType;
+    const success = await handleUpload(files, { modelType: selectedModel });
     if (success) {
       setFiles([]);
     }
-  }, [files, handleUpload]);
+  }, [files, handleUpload, modelType]);
 
   const handleRemove = (id) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -71,6 +86,24 @@ export default function DecisivAIUploadPage() {
             click the button to select files from your device.
           </motion.p>
 
+          {/* Model selection UI */}
+          <div className="mb-6 w-full max-w-3xl">
+            <label className="block text-slate-200 mb-2 text-left">
+              Model Category
+            </label>
+            <select
+              className="w-full rounded-md p-2 bg-slate-800 text-slate-100 border border-white/10"
+              value={modelType}
+              onChange={(e) => setModelType(e.target.value)}
+            >
+              {MODEL_CATEGORIES.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <FileInputField
             files={files}
             onFilesSelected={handleFilesSelected}
@@ -85,7 +118,6 @@ export default function DecisivAIUploadPage() {
           />
         </main>
 
-        {/* subtle divider */}
         <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
       </div>
     </div>
