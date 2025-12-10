@@ -51,6 +51,72 @@ logger = logging.getLogger(__name__)
 # Strict helpers (no fallbacks)
 # -------------------------
 
+import os
+import pandas as pd
+import logging
+from typing import List, Dict
+
+logger = logging.getLogger(__name__)
+
+def _row_to_contents(row: pd.Series, max_chars: int = 512) -> str:
+    """
+    Convert a pandas row to a short contents string suitable for embedding.
+    Example: "date: 2025-01-01; sales: 100; region: west"
+    """
+    parts = []
+    for col, val in row.items():
+        if pd.isna(val) or str(val).strip() == "":
+            continue
+        sval = str(val).strip()
+        if len(sval) > 150:
+            sval = sval[:147].rstrip() + "..."
+        parts.append(f"{col}: {sval}")
+    contents = "; ".join(parts)
+    if len(contents) > max_chars:
+        contents = contents[: max_chars - 3].rstrip() + "..."
+    return contents
+
+def generate_row_contents_from_csv(file_path: str, max_rows: int = 1000, max_chars_per_row: int = 512) -> List[Dict]:
+    """
+    Read the CSV and produce a list of items to upsert to Cyborg embedded index.
+    Each item: {"id": "<basename>::row::<i>", "contents": "...", "metadata": {...}}
+    """
+    try:
+        df = pd.read_csv(file_path, dtype=str, keep_default_na=False, na_values=[""])
+    except Exception as e:
+        logger.exception("Failed to read CSV %s: %s", file_path, e)
+        return []
+
+    rows = min(len(df), max_rows)
+    basename = os.path.basename(file_path)
+    items = []
+    for i in range(rows):
+        row = df.iloc[i]
+        contents = _row_to_contents(row, max_chars=max_chars_per_row)
+        if not contents:
+            continue
+        items.append({
+            "id": f"{basename}::row::{i}",
+            "contents": contents,
+            "metadata": {"source_file": basename, "row_index": i}
+        })
+    return items
+
+def analyze_file_and_run_pipeline(file_path: str, gemini_response: Dict, models_dir: str = "models", **kwargs):
+    """
+    Run your existing pipeline to train/produce artifacts (keeps your current strict pipeline).
+    Then attach 'embeddings' (items with 'contents') for downstream upsert.
+    """
+    # Replace with your existing pipeline call + artifact save logic
+    pipeline_result = run_time_series_pipeline(file_path, gemini_analysis=gemini_response, models_dir=models_dir, **kwargs)
+
+    # produce items for Cyborg upsert (these have contents; embedded Cyborg will compute vectors)
+    items_for_cyborg = generate_row_contents_from_csv(file_path,
+                                                      max_rows=int(kwargs.get("max_rows_for_embeddings", 1000)),
+                                                      max_chars_per_row=int(kwargs.get("max_chars_per_row", 512)))
+    pipeline_result["embeddings"] = items_for_cyborg
+    return {"success": True, "gemini_analysis": gemini_response, "pipeline": pipeline_result}
+
 def resolve_target_column(df: pd.DataFrame, target_candidate: str) -> str:
     """
     STRICT: Only exact column name allowed. Raises KeyError if not present.

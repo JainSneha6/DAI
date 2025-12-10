@@ -1,11 +1,17 @@
 # server: update your blueprint file (where upload_files lives)
 from flask import Blueprint, request, jsonify, current_app, send_from_directory, url_for
 from werkzeug.utils import secure_filename
-import os
+import os, logging
 from datetime import datetime
 import csv
 from services.gemini_analyzer import analyze_file_with_gemini
 from services.time_series_pipeline import analyze_file_and_run_pipeline
+from services.cyborg_client import init_cyborg_client, create_or_load_index, upsert_items
+
+logger = logging.getLogger(__name__)
+# add these imports near the top of your blueprint file if not already present
+import json
+from flask import send_from_directory, url_for
 
 bp = Blueprint("upload", __name__)
 
@@ -16,19 +22,40 @@ def allowed_file(filename):
 
 @bp.route("/api/upload", methods=["POST"])
 def upload_files():
-    # Expect multipart/form-data with file fields named "files" (multiple possible) and an optional "model_type"
     model_type = request.form.get("model_type") or None
     uploaded_files = request.files.getlist("files")
     if not uploaded_files:
         return jsonify({"success": False, "error": "No files uploaded"}), 400
 
     results = []
-    upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(os.getcwd(),"uploads"))
+    upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(os.getcwd(), "uploads"))
     os.makedirs(upload_folder, exist_ok=True)
 
-    # Models directory (where analyze_file_and_run_pipeline saved artifacts)
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
     os.makedirs(models_dir, exist_ok=True)
+
+    # Embedded Cyborg config (env or Flask config)
+    cyborg_api_key = "cyborg_de8158fd38be4b97a400d4712fa77e3d"
+    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index")
+    embedding_model = current_app.config.get("CYBORG_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+
+    cyborg_index = None
+    cyborg_key_path = None
+    if cyborg_api_key:
+        try:
+            init_cyborg_client(api_key=cyborg_api_key,
+                               index_storage=current_app.config.get("CYBORG_INDEX_STORAGE", "memory"),
+                               config_storage=current_app.config.get("CYBORG_CONFIG_STORAGE", "memory"),
+                               items_storage=current_app.config.get("CYBORG_ITEMS_STORAGE", "memory"))
+
+            keys_folder = os.path.join(models_dir, "cyborg_indexes")
+            os.makedirs(keys_folder, exist_ok=True)
+            cyborg_key_path = os.path.join(keys_folder, f"{cyborg_index_name}.key")
+
+            cyborg_index = create_or_load_index(cyborg_index_name, index_key_path=cyborg_key_path, embedding_model=embedding_model)
+        except Exception as e:
+            logger.exception("Embedded Cyborg init failed: %s", e)
+            cyborg_index = None
 
     for f in uploaded_files:
         filename = secure_filename(f.filename)
@@ -39,22 +66,45 @@ def upload_files():
         save_path = os.path.join(upload_folder, filename)
         f.save(save_path)
 
-        # Run analysis on the saved CSV header columns
         gemini_response = analyze_file_with_gemini(save_path, model_type)
         pipeline_result = analyze_file_and_run_pipeline(save_path, gemini_response, models_dir=models_dir)
 
-        # Convert saved artifact paths (filesystem) to downloadable URLs if present
+        # Save artifact URLs (same as your existing logic)
         artifact = pipeline_result.get("pipeline", {}).get("artifact") if isinstance(pipeline_result.get("pipeline"), dict) else pipeline_result.get("artifact")
         artifact_urls = {}
         if artifact:
             model_path = artifact.get("model_path")
             meta_path = artifact.get("meta_path")
             if model_path and os.path.exists(model_path):
-                model_basename = os.path.basename(model_path)
-                artifact_urls["model_url"] = url_for("upload.serve_model", filename=model_basename, _external=True)
+                artifact_urls["model_url"] = url_for("upload.serve_model", filename=os.path.basename(model_path), _external=True)
             if meta_path and os.path.exists(meta_path):
-                meta_basename = os.path.basename(meta_path)
-                artifact_urls["meta_url"] = url_for("upload.serve_model", filename=meta_basename, _external=True)
+                artifact_urls["meta_url"] = url_for("upload.serve_model", filename=os.path.basename(meta_path), _external=True)
+
+        # Now upsert items returned by pipeline_result['embeddings'] (these contain 'contents')
+        try:
+            items = pipeline_result.get("embeddings") or []
+            if cyborg_index and items:
+                # add gemini hints to metadata and upsert
+                items_to_upsert = []
+                for it in items:
+                    item_id = it.get("id")
+                    contents = it.get("contents", "") or it.get("text", "")
+                    metadata = it.get("metadata", {}) or {}
+                    gm = gemini_response.get("analysis", {}) if isinstance(gemini_response, dict) else {}
+                    if gm.get("model_type"):
+                        metadata.setdefault("model_type", gm.get("model_type"))
+                    if gm.get("target_column"):
+                        metadata.setdefault("target_column", gm.get("target_column"))
+
+                    item = {"id": item_id, "metadata": metadata}
+                    if contents:
+                        item["contents"] = contents
+                    items_to_upsert.append(item)
+
+                if items_to_upsert:
+                    upsert_items(cyborg_index, items_to_upsert)
+        except Exception as e:
+            logger.exception("Failed to upsert to embedded Cyborg for file %s: %s", filename, e)
 
         results.append({
             "filename": filename,
@@ -65,9 +115,7 @@ def upload_files():
 
     return jsonify({"success": True, "files": results})
 
-# add these imports near the top of your blueprint file if not already present
-import json
-from flask import send_from_directory, url_for
+
 
 # ... existing blueprint code (upload_files, serve_model) ...
 
