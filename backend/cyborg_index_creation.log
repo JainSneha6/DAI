@@ -1,0 +1,19 @@
+[2025-12-11 14:30:46][INFO] [API Key] Beginning authorize function with API Key: ****2fa77e3d
+[2025-12-11 14:30:46][INFO] [API Key] Using CA bundle: /etc/ssl/certs/ca-certificates.crt
+[2025-12-11 14:30:47][INFO] [API Key] API key request successful on attempt 1
+[2025-12-11 14:30:47][INFO] [API Key] API Key validation successful
+[2025-12-11 14:30:47][INFO] EncryptedIndex created with new index configuration
+[2025-12-11 14:30:47][INFO] Creating new index with db: host=localhost port=5432 dbname=cyborgdb user=cyborg password=cyborg123
+[2025-12-11 14:30:47][INFO] Creating backing stores
+[2025-12-11 14:30:47][CRITICAL] Failed to create backing store: bad optional access
+[2025-12-11 14:39:02][INFO] [API Key] Beginning authorize function with API Key: ****2fa77e3d
+[2025-12-11 14:39:02][INFO] [API Key] Using CA bundle: /etc/ssl/certs/ca-certificates.crt
+[2025-12-11 14:39:02][INFO] [API Key] API key request successful on attempt 1
+[2025-12-11 14:39:02][INFO] [API Key] API Key validation successful
+[2025-12-11 14:39:02][INFO] EncryptedIndex created with new index configuration
+[2025-12-11 14:39:02][INFO] Creating new index with db: host=localhost port=5432 dbname=cyborgdb user=cyborg password=cyborg123
+[2025-12-11 14:39:02][INFO] Creating backing stores
+[2025-12-11 14:39:02][INFO] Backing stores successfully created
+[2025-12-11 14:39:02][INFO] Index successfully created
+[2025-12-11 14:39:03][INFO] Postgres push_map expected_version: 0
+[2025-12-11 14:39:03][INFO] Map and version successfully updated to version 1

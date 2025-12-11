@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # IMPORTANT: use environment variable ONLY
-GEMINI_API_KEY = "AIzaSyCeQmIwBMnF6AVQe_Uzy8lC7TE2HvhefNs"
+GEMINI_API_KEY = "AIzaSyBw1L2cJtEgDvsdeDaVHZ1cfLaaouGNjvs"
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
@@ -25,19 +25,19 @@ MODEL_RECOMMENDATIONS = {
                    "Multi-Touch Attribution Models", "Uplift Modeling"],
         "description": "Measure marketing effectiveness and attribute ROI across channels"
     },
-    "Customer Segmentation & Modeling": {
-        "models": ["K-Means", "DBSCAN", "Gaussian Mixture Models", "Hierarchical Clustering"],
-        "description": "Segment customers based on behavior and characteristics"
-    },
+    # "Customer Segmentation & Modeling": {
+    #     "models": ["K-Means", "DBSCAN", "Gaussian Mixture Models", "Hierarchical Clustering"],
+    #     "description": "Segment customers based on behavior and characteristics"
+    # },
     "Sales, Demand & Financial Forecasting Model": {
         "models": ["Prophet", "ARIMA", "Exponential Smoothing"],
         "description": "Time series forecasting for sales and demand prediction"
     },
-    "Customer Value & Retention Model": {
-        "models": ["Survival Analysis", "Random Forest", "XGBoost",
-                   "Logistic Regression", "LTV Prediction Models"],
-        "description": "Predict customer churn probability and lifetime value"
-    },
+    # "Customer Value & Retention Model": {
+    #     "models": ["Survival Analysis", "Random Forest", "XGBoost",
+    #                "Logistic Regression", "LTV Prediction Models"],
+    #     "description": "Predict customer churn probability and lifetime value"
+    # },
     "Sentiment & Intent NLP Model": {
         "models": ["BERT", "RoBERTa", "DistilBERT", "LSTM Networks", "TextCNN"],
         "description": "Analyze customer sentiment and intent from text data"
@@ -149,6 +149,8 @@ STRICT RULES:
         key_feats = parsed.get("key_features", [])
         if not isinstance(key_feats, list) or any(k not in columns for k in key_feats):
             raise ValueError("key_features contains invalid or unknown columns.")
+        
+        print("Gemini analysis successful:", raw)
 
         return {
             "success": True,

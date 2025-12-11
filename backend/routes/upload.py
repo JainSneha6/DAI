@@ -1,76 +1,250 @@
-# server: update your blueprint file (where upload_files lives)
+# upload_blueprint.py
+# Flask blueprint for file uploads, analysis, artifact serving and optional Cyborg embedding
+# Modified to match working example: uses postgres URI fallback to in-memory if postgres init fails,
+# safer logging, and robust upsert handling.
+# Further modified to use cyborgdb-core[langchain] for splitting CSV into row-level Documents and storing via CyborgVectorStore.
+
 from flask import Blueprint, request, jsonify, current_app, send_from_directory, url_for
 from werkzeug.utils import secure_filename
-import os, logging
+import os
+import logging
+import json
 from datetime import datetime
-import csv
 from services.gemini_analyzer import analyze_file_with_gemini
 from services.time_series_pipeline import analyze_file_and_run_pipeline
-from services.cyborg_client import init_cyborg_client, create_or_load_index, upsert_items
+from services.cyborg_client import init_cyborg_client, create_or_load_index, upsert_items, _make_dbconfig
+from langchain_community.document_loaders import CSVLoader
+from langchain_core.documents import Document
+from cyborgdb_core.integrations.langchain import CyborgVectorStore
+from cyborgdb_core import DBConfig
 
+# Basic logger configuration (don't rely on third-party logger.configure calls here)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-# add these imports near the top of your blueprint file if not already present
-import json
-from flask import send_from_directory, url_for
 
 bp = Blueprint("upload", __name__)
 
 ALLOWED_EXTENSIONS = {"csv"}
 
+
 def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    return filename and "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @bp.route("/api/upload", methods=["POST"])
 def upload_files():
+    """Receives uploaded CSV files, runs analysis + pipeline, stores artifacts and optionally embeds
+    pipeline embeddings into an embedded Cyborg index (Postgres preferred, in-memory fallback).
+    Uses LangChain integration to split CSV into row-level Documents for proper RAG retrieval.
+    """
     model_type = request.form.get("model_type") or None
     uploaded_files = request.files.getlist("files")
     if not uploaded_files:
         return jsonify({"success": False, "error": "No files uploaded"}), 400
 
     results = []
+
+    # Configure folders from app config (or defaults)
     upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(os.getcwd(), "uploads"))
     os.makedirs(upload_folder, exist_ok=True)
 
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
     os.makedirs(models_dir, exist_ok=True)
 
-    # Embedded Cyborg config (env or Flask config)
-    cyborg_api_key = "cyborg_de8158fd38be4b97a400d4712fa77e3d"
-    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index")
-    embedding_model = current_app.config.get("CYBORG_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    # Cyborg configuration: prefer app config or env vars; default to Postgres URI payload used in working example
+    cyborg_api_key = (
+        current_app.config.get("CYBORG_API_KEY")
+        or os.environ.get("CYBORG_API_KEY")
+        or "cyborg_de8158fd38be4b97a400d4712fa77e3d"
+    )
+
+    # Storage backend choices (allow override via config)
+    cyborg_index_storage = current_app.config.get("CYBORG_INDEX_STORAGE", "postgres")
+    cyborg_config_storage = current_app.config.get("CYBORG_CONFIG_STORAGE", "postgres")
+    cyborg_items_storage = current_app.config.get("CYBORG_ITEMS_STORAGE", "postgres")
+    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v7")
+    embedding_model = (
+        current_app.config.get("CYBORG_EMBEDDING_MODEL")
+        or os.environ.get("CYBORG_EMBEDDING_MODEL")
+        or "all-MiniLM-L6-v2"
+    )
+
+    # Prefer a full postgres URI (works with the example init). If you use libpq connection string, ensure
+    # the cyborg client accepts it. Here we prefer the URI form which matched your working example.
+    pg_uri = current_app.config.get(
+        "CYBORG_PG_URI",
+        os.environ.get(
+            "CYBORG_PG_URI",
+            "postgresql://cyborg:cyborg123@localhost:5432/cyborgdb",
+        ),
+    )
+
+    cyborg_index_table = current_app.config.get("CYBORG_INDEX_TABLE", "cyborg_index")
+    cyborg_items_table = current_app.config.get("CYBORG_ITEMS_TABLE", "cyborg_items")
+    cyborg_config_table = current_app.config.get("CYBORG_CONFIG_TABLE", "cyborg_config")
 
     cyborg_index = None
     cyborg_key_path = None
+    vector_store = None
+
+    # Initialize Cyborg client (try postgres storage if configured, otherwise fall back to memory)
     if cyborg_api_key:
         try:
-            init_cyborg_client(api_key=cyborg_api_key,
-                               index_storage=current_app.config.get("CYBORG_INDEX_STORAGE", "memory"),
-                               config_storage=current_app.config.get("CYBORG_CONFIG_STORAGE", "memory"),
-                               items_storage=current_app.config.get("CYBORG_ITEMS_STORAGE", "memory"))
+            # If postgres storage is requested, pass the same URI for index/config/items connection params
+            if cyborg_index_storage == "postgres" or cyborg_config_storage == "postgres" or cyborg_items_storage == "postgres":
+                init_cyborg_client(
+                    api_key=cyborg_api_key,
+                    index_storage=cyborg_index_storage,
+                    config_storage=cyborg_config_storage,
+                    items_storage=cyborg_items_storage,
+                    index_connection=pg_uri,
+                    config_connection=pg_uri,
+                    items_connection=pg_uri,
+                    index_table=cyborg_index_table,
+                    items_table=cyborg_items_table,
+                    config_table=cyborg_config_table,
+                )
+            else:
+                # In-memory init if configured
+                init_cyborg_client(
+                    api_key=cyborg_api_key,
+                    index_storage=cyborg_index_storage,
+                    config_storage=cyborg_config_storage,
+                    items_storage=cyborg_items_storage,
+                )
 
+            # ensure keys folder exists and create/load index
             keys_folder = os.path.join(models_dir, "cyborg_indexes")
             os.makedirs(keys_folder, exist_ok=True)
             cyborg_key_path = os.path.join(keys_folder, f"{cyborg_index_name}.key")
 
-            cyborg_index = create_or_load_index(cyborg_index_name, index_key_path=cyborg_key_path, embedding_model=embedding_model)
-        except Exception as e:
-            logger.exception("Embedded Cyborg init failed: %s", e)
-            cyborg_index = None
+            # create_or_load_index should return a truthy index object on success
+            cyborg_index = create_or_load_index(
+                cyborg_index_name, index_key_path=cyborg_key_path, embedding_model=embedding_model
+            )
 
+            if cyborg_index:
+                logger.info("Cyborg index initialized: %s", cyborg_index_name)
+            else:
+                logger.warning("Cyborg create_or_load_index returned no index. Falling back to no-embed mode.")
+
+        except Exception as e:
+            # If postgres init fails (for example connection/config issues), attempt an in-memory fallback
+            logger.exception("Embedded Cyborg init failed (will attempt in-memory fallback): %s", e)
+            try:
+                init_cyborg_client(api_key=cyborg_api_key, index_storage="memory", config_storage="memory", items_storage="memory")
+                cyborg_index = create_or_load_index(cyborg_index_name, embedding_model=embedding_model)
+                # Update storage vars for fallback
+                cyborg_index_storage = "memory"
+                cyborg_config_storage = "memory"
+                cyborg_items_storage = "memory"
+                logger.info("Cyborg in-memory index created: %s", bool(cyborg_index))
+            except Exception as e2:
+                logger.exception("Cyborg in-memory fallback also failed: %s", e2)
+                cyborg_index = None
+
+    # Initialize LangChain CyborgVectorStore if index available (for CSV row splitting and upsert)
+    if cyborg_index and cyborg_key_path and os.path.exists(cyborg_key_path):
+        try:
+            with open(cyborg_key_path, "rb") as f:
+                index_key = f.read()
+
+            index_loc = _make_dbconfig(
+                cyborg_index_storage,
+                connection_string=pg_uri if cyborg_index_storage == "postgres" else None,
+                table_name=cyborg_index_table
+            )
+            config_loc = _make_dbconfig(
+                cyborg_config_storage,
+                connection_string=pg_uri if cyborg_config_storage == "postgres" else None,
+                table_name=cyborg_config_table
+            )
+            items_loc = _make_dbconfig(
+                cyborg_items_storage,
+                connection_string=pg_uri if cyborg_items_storage == "postgres" else None,
+                table_name=cyborg_items_table
+            )
+
+            vector_store = CyborgVectorStore(
+                index_name=cyborg_index_name,
+                index_key=index_key,
+                api_key=cyborg_api_key,
+                embedding=embedding_model,
+                index_location=index_loc,
+                config_location=config_loc,
+                items_location=items_loc,
+                metric="cosine"
+            )
+            logger.info("CyborgVectorStore initialized for LangChain CSV row integration")
+        except Exception as e:
+            logger.exception("Failed to initialize CyborgVectorStore: %s", e)
+            vector_store = None
+
+    # Process uploaded files
     for f in uploaded_files:
-        filename = secure_filename(f.filename)
-        if not allowed_file(filename):
-            results.append({"filename": filename, "success": False, "error": "Unsupported file type"})
+        filename = secure_filename(f.filename or "")
+        if not filename or not allowed_file(filename):
+            results.append({"filename": filename, "success": False, "error": "Unsupported or missing file type"})
             continue
 
         save_path = os.path.join(upload_folder, filename)
-        f.save(save_path)
+        try:
+            f.save(save_path)
+        except Exception as e:
+            logger.exception("Failed to save uploaded file %s: %s", filename, e)
+            results.append({"filename": filename, "success": False, "error": f"Failed to save file: {e}"})
+            continue
 
-        gemini_response = analyze_file_with_gemini(save_path, model_type)
-        pipeline_result = analyze_file_and_run_pipeline(save_path, gemini_response, models_dir=models_dir)
+        # Run analysis
+        try:
+            gemini_response = analyze_file_with_gemini(save_path, model_type)
+        except Exception as e:
+            logger.exception("Gemini analysis failed for %s: %s", save_path, e)
+            gemini_response = {"error": str(e)}
 
-        # Save artifact URLs (same as your existing logic)
-        artifact = pipeline_result.get("pipeline", {}).get("artifact") if isinstance(pipeline_result.get("pipeline"), dict) else pipeline_result.get("artifact")
+        # Load CSV rows as Documents and upsert via LangChain (replaces entire file upsert)
+        csv_upsert_success = False
+        if vector_store:
+            try:
+                loader = CSVLoader(file_path=save_path)
+                docs = loader.load()
+
+                # Enrich metadata with Gemini analysis if available
+                analysis = gemini_response.get("analysis", {}) if isinstance(gemini_response, dict) and gemini_response.get("success") else {}
+                for doc in docs:
+                    doc.metadata["filename"] = filename
+                    doc.metadata["source"] = "uploaded_csv"
+                    doc.metadata["upload_time"] = datetime.utcnow().isoformat()
+                    doc.metadata["model_type"] = analysis.get("model_type")
+                    doc.metadata["target_column"] = analysis.get("target_column")
+                    doc.metadata["key_features"] = analysis.get("key_features", [])
+                    if analysis.get("explanation"):
+                        doc.metadata["explanation"] = analysis.get("explanation")
+
+                vector_store.add_documents(docs)
+                logger.info("Upserted %d CSV row Documents into CyborgVectorStore for %s", len(docs), filename)
+                csv_upsert_success = True
+            except Exception as e:
+                logger.exception("Failed to load/add CSV Documents to CyborgVectorStore for %s: %s", filename, e)
+        else:
+            logger.debug("Skipped CSV row upsert for %s: no vector_store", filename)
+
+        if not csv_upsert_success:
+            results.append({"filename": filename, "success": False, "error": "CSV embedding failed"})
+            continue  # Skip pipeline if CSV failed, or adjust as needed
+
+        # Run pipeline
+        try:
+            pipeline_result = analyze_file_and_run_pipeline(save_path, gemini_response, models_dir=models_dir)
+        except Exception as e:
+            logger.exception("Pipeline run failed for %s: %s", save_path, e)
+            pipeline_result = {"error": str(e)}
+
+        # Save artifact URLs if created by pipeline
+        artifact = None
+        if isinstance(pipeline_result, dict):
+            artifact = pipeline_result.get("pipeline", {}).get("artifact") if isinstance(pipeline_result.get("pipeline"), dict) else pipeline_result.get("artifact")
+
         artifact_urls = {}
         if artifact:
             model_path = artifact.get("model_path")
@@ -80,63 +254,94 @@ def upload_files():
             if meta_path and os.path.exists(meta_path):
                 artifact_urls["meta_url"] = url_for("upload.serve_model", filename=os.path.basename(meta_path), _external=True)
 
-        # Now upsert items returned by pipeline_result['embeddings'] (these contain 'contents')
+        # Upsert embeddings returned by pipeline_result into vector_store (via LangChain) or fallback to direct index
         try:
-            items = pipeline_result.get("embeddings") or []
-            if cyborg_index and items:
-                # add gemini hints to metadata and upsert
+            # pipeline_result may be shaped either:
+            # 1) {"success":..., "pipeline": {..., "embeddings": [...]}, ...}
+            # 2) {"embeddings": [...], ...}
+            items = []
+            if isinstance(pipeline_result, dict):
+                # prefer the nested pipeline.embeddings if present
+                items = pipeline_result.get("pipeline", {}).get("embeddings") or pipeline_result.get("embeddings") or []
+            else:
+                items = []
+
+            # Defensive logging to help debug why nothing gets upserted
+            logger.debug("Cyborg index object: %s (type: %s)", bool(cyborg_index), type(cyborg_index).__name__ if cyborg_index else None)
+            logger.debug("Found %d embedding items from pipeline for file %s", len(items) if items else 0, filename)
+
+            if vector_store and items:
+                docs = []
+                # Enrich metadata with gemini hints if available
+                gm = None
+                if isinstance(gemini_response, dict):
+                    gm = gemini_response.get("analysis") or gemini_response
+                for it in items:
+                    # ensure we always have an id (but LangChain generates if missing)
+                    contents = it.get("contents") or it.get("text") or ""
+                    metadata = it.get("metadata") or {}
+
+                    if isinstance(gm, dict):
+                        if gm.get("model_type"):
+                            metadata.setdefault("model_type", gm.get("model_type"))
+                        if gm.get("target_column"):
+                            metadata.setdefault("target_column", gm.get("target_column"))
+
+                    doc = Document(page_content=contents, metadata=metadata)
+                    docs.append(doc)
+
+                logger.debug("Prepared %d Documents from pipeline items for file %s", len(docs), filename)
+
+                if docs:
+                    vector_store.add_documents(docs)
+                    logger.info("Upserted %d pipeline Documents into CyborgVectorStore for %s", len(docs), filename)
+            elif cyborg_index and items:
+                # Fallback to direct upsert if no vector_store
                 items_to_upsert = []
                 for it in items:
-                    item_id = it.get("id")
-                    contents = it.get("contents", "") or it.get("text", "")
-                    metadata = it.get("metadata", {}) or {}
-                    gm = gemini_response.get("analysis", {}) if isinstance(gemini_response, dict) else {}
-                    if gm.get("model_type"):
-                        metadata.setdefault("model_type", gm.get("model_type"))
-                    if gm.get("target_column"):
-                        metadata.setdefault("target_column", gm.get("target_column"))
+                    item_id = it.get("id") or it.get("uid") or f"auto-{datetime.utcnow().timestamp()}"
+                    contents = it.get("contents") or it.get("text") or ""
+                    metadata = it.get("metadata") or {}
+
+                    # enrich as above
+                    if isinstance(gm, dict):
+                        if gm.get("model_type"):
+                            metadata.setdefault("model_type", gm.get("model_type"))
+                        if gm.get("target_column"):
+                            metadata.setdefault("target_column", gm.get("target_column"))
 
                     item = {"id": item_id, "metadata": metadata}
                     if contents:
                         item["contents"] = contents
+
                     items_to_upsert.append(item)
 
                 if items_to_upsert:
-                    upsert_items(cyborg_index, items_to_upsert)
+                    try:
+                        res = upsert_items(cyborg_index, items_to_upsert)
+                        logger.info("Fallback upserted %d items into Cyborg index '%s' (result: %s)", len(items_to_upsert), cyborg_index_name, repr(res))
+                    except Exception as e_up:
+                        logger.exception("Fallback upsert_items exception for file %s: %s", filename, e_up)
+            else:
+                logger.debug("Skipped pipeline item upsert for %s: no store or empty items", filename)
         except Exception as e:
-            logger.exception("Failed to upsert to embedded Cyborg for file %s: %s", filename, e)
+            logger.exception("Failed to upsert pipeline items for file %s: %s", filename, e)
+
 
         results.append({
             "filename": filename,
             "analysis": gemini_response,
             "pipeline": pipeline_result,
-            "artifacts": artifact_urls
+            "artifacts": artifact_urls,
         })
 
     return jsonify({"success": True, "files": results})
 
 
-
-# ... existing blueprint code (upload_files, serve_model) ...
-
 @bp.route("/api/models", methods=["GET"])
 def list_saved_models():
-    """
-    List saved model artifacts and their metadata.
-    Expects models to be stored in MODELS_FOLDER (app config) or ./models by default.
-    Returns:
-      {
-        "success": true,
-        "models": [
-          {
-            "meta_filename": "Prophet_20251201T123456Z.meta.json",
-            "metadata": {...},
-            "model_url": "https://.../models/Prophet_20251201T123456Z.pkl",
-            "meta_url": "https://.../models/Prophet_20251201T123456Z.meta.json"
-          },
-          ...
-        ]
-      }
+    """List saved model artifacts and their metadata from MODELS_FOLDER.
+    Looks for files ending with .meta.json and pairs them with .pkl artifacts.
     """
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
     os.makedirs(models_dir, exist_ok=True)
@@ -147,7 +352,6 @@ def list_saved_models():
     except Exception as e:
         return jsonify({"success": False, "error": f"Could not list models dir: {e}"}), 500
 
-    # find meta files
     meta_files = [f for f in files if f.endswith(".meta.json")]
     for meta_fname in meta_files:
         meta_path = os.path.join(models_dir, meta_fname)
@@ -155,16 +359,10 @@ def list_saved_models():
             with open(meta_path, "r", encoding="utf-8") as fh:
                 meta = json.load(fh)
         except Exception:
-            # if meta cannot be read, skip it
             continue
 
         base = meta_fname.replace(".meta.json", "")
-        # try to find matching model artifact (pkl)
-        pkl_match = None
-        for candidate in files:
-            if candidate.startswith(base) and candidate.endswith(".pkl"):
-                pkl_match = candidate
-                break
+        pkl_match = next((candidate for candidate in files if candidate.startswith(base) and candidate.endswith(".pkl")), None)
 
         model_url = url_for("upload.serve_model", filename=pkl_match, _external=True) if pkl_match else None
         meta_url = url_for("upload.serve_model", filename=meta_fname, _external=True)
@@ -176,7 +374,6 @@ def list_saved_models():
             "meta_url": meta_url,
         })
 
-    # sort by created_at in metadata (if available) descending
     def _created_key(it):
         try:
             return it["metadata"].get("created_at", "")
@@ -187,13 +384,8 @@ def list_saved_models():
     return jsonify({"success": True, "models": items})
 
 
-# Serve saved models & metadata (downloadable)
 @bp.route("/models/<path:filename>", methods=["GET"])
 def serve_model(filename):
-    """
-    Serves files saved in the models directory. Make sure MODELS_FOLDER in app config
-    points to the folder where models are saved (default: ./models).
-    """
+    """Serve saved files from the models dir. Keeps path confined to MODELS_FOLDER."""
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
-    # Security: ensure path is inside models_dir
     return send_from_directory(models_dir, filename, as_attachment=True)
