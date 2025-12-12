@@ -7,7 +7,7 @@ export default function FilesList() {
 
     useEffect(() => {
         setLoading(true);
-        fetch("/api/files")
+        fetch("http://localhost:5000/api/files")
             .then((r) => r.json())
             .then((j) => {
                 if (j.success) setFiles(j.files || []);
