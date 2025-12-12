@@ -17,6 +17,11 @@ from langchain_community.document_loaders import CSVLoader
 from langchain_core.documents import Document
 from cyborgdb_core.integrations.langchain import CyborgVectorStore
 from cyborgdb_core import DBConfig
+from services.data_enrichment import combine_classification, summarize_csv, write_upload_metadata
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import RetrievalQA
+from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain.retrievers import ContextualCompressionRetriever
 
 # Basic logger configuration (don't rely on third-party logger.configure calls here)
 logging.basicConfig(level=logging.INFO)
@@ -232,6 +237,66 @@ def upload_files():
         if not csv_upsert_success:
             results.append({"filename": filename, "success": False, "error": "CSV embedding failed"})
             continue  # Skip pipeline if CSV failed, or adjust as needed
+
+        # --- Data enrichment: classification + summarization + metadata persistence ---
+        try:
+            # Summarize CSV (pandas-backed) - relatively cheap
+            summary = summarize_csv(save_path)
+
+            # deduce category: prefer gemini, fallback to keyword classify
+            category = combine_classification(gemini_response, summary.get("columns", []))
+
+            # Build metadata
+            file_meta = {
+                "filename": filename,
+                "uploaded_at": datetime.utcnow().isoformat() + "Z",
+                "category": category,
+                "columns": summary.get("columns", []),
+                "dtypes": summary.get("dtypes", {}),
+                "row_count": summary.get("row_count"),
+                "sample_rows": summary.get("sample_rows", []),
+                "aggregations": summary.get("aggregations", {}),
+                "trend_last_30_days": summary.get("trend_last_30_days", []),
+            }
+
+            # Persist metadata next to uploads for quick listing
+            try:
+                write_upload_metadata(upload_folder, filename, file_meta)
+            except Exception:
+                logger.exception("Could not persist upload metadata for %s", filename)
+
+            # Add a summary Document into your vector store to make category & summary retrievable
+            if vector_store:
+                # create a short textual summary to embed
+                text_parts = [
+                    f"Filename: {filename}",
+                    f"Category: {category}",
+                    f"Columns: {', '.join(file_meta['columns'])}",
+                    f"Row count: {file_meta.get('row_count')}"
+                ]
+                # include top aggregations for retrieval
+                for col, agg in (file_meta.get("aggregations") or {}).items():
+                    try:
+                        text_parts.append(f"{col} mean={agg.get('mean')}, sum={agg.get('sum')}")
+                    except Exception:
+                        continue
+                text_summary = "\n".join(text_parts)
+
+                doc = Document(page_content=text_summary, metadata={
+                    "filename": filename,
+                    "category": category,
+                    "upload_time": file_meta["uploaded_at"],
+                    "type": "file_summary",
+                    "columns": file_meta["columns"]
+                })
+                try:
+                    vector_store.add_documents([doc])
+                    logger.info("Inserted summary doc for %s into vector store", filename)
+                except Exception:
+                    logger.exception("Failed to insert summary doc for %s into vector store", filename)
+
+        except Exception as e:
+            logger.exception("Data enrichment step failed for %s: %s", filename, e)
 
         # Run pipeline
         try:
