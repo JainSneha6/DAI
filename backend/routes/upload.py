@@ -18,10 +18,7 @@ from langchain_core.documents import Document
 from cyborgdb_core.integrations.langchain import CyborgVectorStore
 from cyborgdb_core import DBConfig
 from services.data_enrichment import combine_classification, summarize_csv, write_upload_metadata
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain.embeddings import SentenceTransformerEmbeddings
-from langchain.retrievers import ContextualCompressionRetriever
+
 
 # Basic logger configuration (don't rely on third-party logger.configure calls here)
 logging.basicConfig(level=logging.INFO)
