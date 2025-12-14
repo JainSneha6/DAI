@@ -4,20 +4,6 @@ import FileInputField from "../components/InputField.jsx";
 import { useDragAndDrop } from "../hooks/useDragAndDrop.js";
 import { useFileSelection } from "../hooks/useFileSelection.js";
 import useFileUpload from "../hooks/useFileUpload.js";
-import FilesList from "../components/FilesList.jsx";
-import ChatWithData from "../components/ChatWithData.jsx";
-
-const MODEL_CATEGORIES = [
-  "Auto-detect (Best-fit)",
-  "Sales, Demand & Financial Forecasting Model",
-  "Pricing & Revenue Optimization Model",
-  "Marketing ROI & Attribution Model",
-  "Customer Segmentation & Modeling",
-  "Customer Value & Retention Model",
-  "Sentiment & Intent NLP Model",
-  "Inventory & Replenishment Optimization Model",
-  "Logistics & Supplier Risk Model",
-];
 
 export default function DecisivAIUploadPage() {
   const [files, setFiles] = useState([]);
@@ -26,8 +12,6 @@ export default function DecisivAIUploadPage() {
 
   const { onFilesSelected: addFiles } = useFileSelection();
   const { handleUpload, uploading, uploadStatus } = useFileUpload();
-
-  const [modelType, setModelType] = useState(MODEL_CATEGORIES[0]);
 
   const handleFilesSelected = useCallback(
     (selectedFiles) => {
@@ -42,12 +26,11 @@ export default function DecisivAIUploadPage() {
   );
 
   const handleUploadClick = useCallback(async () => {
-    const selectedModel = modelType === MODEL_CATEGORIES[0] ? null : modelType;
-    const success = await handleUpload(files, { modelType: selectedModel });
+    const success = await handleUpload(files);
     if (success) {
       setFiles([]);
     }
-  }, [files, handleUpload, modelType]);
+  }, [files, handleUpload]);
 
   const handleRemove = (id) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -69,9 +52,6 @@ export default function DecisivAIUploadPage() {
     <div className="min-h-screen bg-linear-to-br from-[#1b1f30] via-[#1a2238] to-[#111827] p-8">
       <div className="w-full max-w-7xl mx-auto rounded-3xl shadow-[0_0_60px_-20px_rgba(0,0,0,0.6)] overflow-hidden relative border border-white/10 bg-linear-to-br from-[#0d111a]/60 to-[#0e1320]/40 backdrop-blur-xl p-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* LEFT: Upload area (main) */}
-          <div className="w-full lg:w-1/2">
-            <main className="flex flex-col items-center text-center relative z-10">
               <motion.h1
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -91,24 +71,6 @@ export default function DecisivAIUploadPage() {
                 or click the button to select files from your device.
               </motion.p>
 
-              {/* Model selection UI */}
-              <div className="mb-6 w-full max-w-3xl">
-                <label className="block text-slate-200 mb-2 text-left">
-                  Model Category
-                </label>
-                <select
-                  className="w-full rounded-md p-2 bg-slate-800 text-slate-100 border border-white/10"
-                  value={modelType}
-                  onChange={(e) => setModelType(e.target.value)}
-                >
-                  {MODEL_CATEGORIES.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="w-full px-4">
                 <FileInputField
                   files={files}
@@ -123,25 +85,6 @@ export default function DecisivAIUploadPage() {
                   uploadStatus={uploadStatus}
                 />
               </div>
-            </main>
-          </div>
-
-          {/* RIGHT: Files list + Chat */}
-          <aside className="w-full lg:w-1/2 flex flex-col gap-6">
-            <div className="sticky top-6">
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold text-slate-100 mb-2">Files & Categories</h2>
-                <p className="text-sm text-slate-300">Browse uploaded files and their inferred categories.</p>
-              </div>
-              <FilesList />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold text-slate-100 mb-2">Chat with your data</h2>
-              <p className="text-sm text-slate-300 mb-4">Ask trends, anomalies, and summaries across your uploaded datasets.</p>
-              <ChatWithData />
-            </div>
-          </aside>
         </div>
 
         <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
