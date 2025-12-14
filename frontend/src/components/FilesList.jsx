@@ -42,8 +42,7 @@ export default function FilesList() {
                             "Unknown";
                     }
 
-                    const rowCount =
-                        typeof f.row_count === "number" ? f.row_count : "?";
+                    const rowCount = f.row_count || 0;
 
                     const columns = Array.isArray(f.columns) ? f.columns : [];
 
