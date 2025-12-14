@@ -1,8 +1,6 @@
 # upload_blueprint.py
 # Flask blueprint for file uploads, analysis, artifact serving and optional Cyborg embedding
-# Modified to match working example: uses postgres URI fallback to in-memory if postgres init fails,
-# safer logging, and robust upsert handling.
-# Further modified to use cyborgdb-core[langchain] for splitting CSV into row-level Documents and storing via CyborgVectorStore.
+# Modified to wire into services.gemini_analyzer trigger/dispatcher (analyze_and_trigger / trigger_models_for_file)
 
 from flask import Blueprint, request, jsonify, current_app, send_from_directory, url_for
 from werkzeug.utils import secure_filename
@@ -10,8 +8,8 @@ import os
 import logging
 import json
 from datetime import datetime
-from services.gemini_analyzer import analyze_file_with_gemini
-from services.time_series_pipeline import analyze_file_and_run_pipeline
+from services.gemini_analyzer import analyze_file_with_gemini, trigger_models_for_file, analyze_and_trigger
+#from services.time_series_pipeline import analyze_file_and_run_pipeline  # STRICT runner is invoked via gemini_analyzer dispatcher now
 from services.cyborg_client import init_cyborg_client, create_or_load_index, upsert_items, _make_dbconfig
 from langchain_community.document_loaders import CSVLoader
 from langchain_core.documents import Document
@@ -64,7 +62,7 @@ def upload_files():
     cyborg_index_storage = current_app.config.get("CYBORG_INDEX_STORAGE", "postgres")
     cyborg_config_storage = current_app.config.get("CYBORG_CONFIG_STORAGE", "postgres")
     cyborg_items_storage = current_app.config.get("CYBORG_ITEMS_STORAGE", "postgres")
-    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v10")
+    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v11")
     embedding_model = (
         current_app.config.get("CYBORG_EMBEDDING_MODEL")
         or os.environ.get("CYBORG_EMBEDDING_MODEL")
@@ -287,18 +285,67 @@ def upload_files():
 
         except Exception as e:
             logger.exception("Data enrichment step failed for %s: %s", filename, e)
+            
+        logger.debug("Gemini response: %s", gemini_response)
 
-        # Run pipeline
+        # ---------------------------
+        # Trigger mapped models via gemini_analyzer dispatcher
+        # - Try to provide a strict `target_col_hint` to the time-series pipeline when possible.
+        # - We only use exact key_columns suggested by Gemini and verify they are numeric/convertible
+        #   on a small CSV sample. This avoids fuzzy heuristics while still allowing the strict
+        #   pipeline to run when Gemini provided an explicit target hint.
         try:
-            pipeline_result = analyze_file_and_run_pipeline(save_path, gemini_response, models_dir=models_dir)
+            target_col_hint = None
+            try:
+                # Prefer Gemini-provided key_columns (they must be exact column names per our strict rules)
+                if isinstance(gemini_response, dict) and gemini_response.get("success"):
+                    analysis = gemini_response.get("analysis", {})
+                    key_cols = analysis.get("key_columns", []) or []
+                else:
+                    key_cols = []
+
+                if key_cols:
+                    # Inspect a small sample to verify numeric convertibility (non-heuristic: exact column names only)
+                    try:
+                        import pandas as _pd
+                        sample_df = _pd.read_csv(save_path, nrows=100)
+                        for kc in key_cols:
+                            if kc in sample_df.columns:
+                                coerced = _pd.to_numeric(sample_df[kc], errors="coerce")
+                                if coerced.notna().sum() > 0:
+                                    target_col_hint = kc
+                                    logger.info("Using Gemini key_column '%s' as target_col_hint for %s", kc, filename)
+                                    break
+                    except Exception:
+                        logger.exception("Failed to sample CSV to validate key_columns for %s", filename)
+            except Exception:
+                logger.exception("Failed to determine target_col_hint from gemini_response")
+
+            if not target_col_hint:
+                logger.info("No explicit target_col_hint available for %s; pipeline will not run in strict mode unless Gemini provides a target.", filename)
+
+            # Use trigger_models_for_file to map data_domain -> models and invoke implemented runners (e.g. time_series pipeline)
+            trigger_report = trigger_models_for_file(save_path, gemini_response, models_dir=models_dir, target_col_hint=target_col_hint)
+            pipeline_result = trigger_report
         except Exception as e:
-            logger.exception("Pipeline run failed for %s: %s", save_path, e)
+            logger.exception("Model trigger run failed for %s: %s", save_path, e)
             pipeline_result = {"error": str(e)}
 
-        # Save artifact URLs if created by pipeline
+        # Save artifact URLs if created by pipeline runner(s)
         artifact = None
         if isinstance(pipeline_result, dict):
+            # Legacy pipelines may expose artifact at pipeline/artifact or artifact; preserve compatibility
             artifact = pipeline_result.get("pipeline", {}).get("artifact") if isinstance(pipeline_result.get("pipeline"), dict) else pipeline_result.get("artifact")
+            # If we have multiple runners, look for first artifact produced
+            if not artifact and pipeline_result.get("runners"):
+                for r in pipeline_result.get("runners", {}).values():
+                    res = r.get("result") if isinstance(r, dict) else r
+                    if not isinstance(res, dict):
+                        continue
+                    a = res.get("pipeline", {}).get("artifact") if isinstance(res.get("pipeline"), dict) else res.get("artifact")
+                    if a:
+                        artifact = a
+                        break
 
         artifact_urls = {}
         if artifact:
@@ -311,13 +358,20 @@ def upload_files():
 
         # Upsert embeddings returned by pipeline_result into vector_store (via LangChain) or fallback to direct index
         try:
-            # pipeline_result may be shaped either:
-            # 1) {"success":..., "pipeline": {..., "embeddings": [...]}, ...}
-            # 2) {"embeddings": [...], ...}
             items = []
             if isinstance(pipeline_result, dict):
-                # prefer the nested pipeline.embeddings if present
+                # legacy shape
                 items = pipeline_result.get("pipeline", {}).get("embeddings") or pipeline_result.get("embeddings") or []
+
+                # collect from runners if dispatcher returned one
+                if pipeline_result.get("runners"):
+                    for r in pipeline_result.get("runners", {}).values():
+                        res = r.get("result") if isinstance(r, dict) else r
+                        if isinstance(res, dict):
+                            items_from_r = res.get("pipeline", {}).get("embeddings") or res.get("embeddings") or []
+                            if items_from_r:
+                                items.extend(items_from_r)
+
             else:
                 items = []
 
@@ -444,6 +498,7 @@ def serve_model(filename):
     """Serve saved files from the models dir. Keeps path confined to MODELS_FOLDER."""
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
     return send_from_directory(models_dir, filename, as_attachment=True)
+
 
 def _sanitize_for_json(obj):
     if obj is None:
