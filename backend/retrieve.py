@@ -24,7 +24,7 @@ init_cyborg_client(api_key=api_key,
                 items_table=cyborg_items_table,
                 config_table=cyborg_config_table)
 
-index = create_or_load_index("embedded_index_v7", index_key_path="models/cyborg_indexes/embedded_index_v7.key", embedding_model=os.environ.get("CYBORG_EMBEDDING_MODEL", "all-MiniLM-L6-v2"))
+index = create_or_load_index("embedded_index_v10", index_key_path="models/cyborg_indexes/embedded_index_v10.key", embedding_model=os.environ.get("CYBORG_EMBEDDING_MODEL", "all-MiniLM-L6-v2"))
 
 # semantic search by text (server will encode the query)
 res = index.query(query_contents="Smartwatch Electronics", top_k=2)

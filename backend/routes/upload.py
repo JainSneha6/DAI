@@ -64,7 +64,7 @@ def upload_files():
     cyborg_index_storage = current_app.config.get("CYBORG_INDEX_STORAGE", "postgres")
     cyborg_config_storage = current_app.config.get("CYBORG_CONFIG_STORAGE", "postgres")
     cyborg_items_storage = current_app.config.get("CYBORG_ITEMS_STORAGE", "postgres")
-    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v9")
+    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v10")
     embedding_model = (
         current_app.config.get("CYBORG_EMBEDDING_MODEL")
         or os.environ.get("CYBORG_EMBEDDING_MODEL")
