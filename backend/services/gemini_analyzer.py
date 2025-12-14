@@ -1,58 +1,42 @@
 # services/gemini_analyzer.py
-
-import google.generativeai as genai
 import os
-from typing import Optional, List, Dict
 import csv
 import json
 import re
 import logging
+from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# IMPORTANT: use environment variable ONLY
-GEMINI_API_KEY = "AIzaSyBw1L2cJtEgDvsdeDaVHZ1cfLaaouGNjvs"
+# STRICT: environment variable only
+GEMINI_API_KEY = "AIzaSyBw92Kb3L1GTN5lh_UaH4gqdYVyiUyMiYU"
+
 if GEMINI_API_KEY:
     try:
+        import google.generativeai as genai
         genai.configure(api_key=GEMINI_API_KEY)
     except Exception:
-        pass
+        logger.exception("Failed to configure Gemini client")
+else:
+    logger.warning("GEMINI_API_KEY not set; Gemini calls will fail")
 
 
-MODEL_RECOMMENDATIONS = {
-    "Marketing ROI & Attribution Model": {
-        "models": ["Markov Chain Attribution", "Shapley Value Attribution",
-                   "Multi-Touch Attribution Models", "Uplift Modeling"],
-        "description": "Measure marketing effectiveness and attribute ROI across channels"
-    },
-    # "Customer Segmentation & Modeling": {
-    #     "models": ["K-Means", "DBSCAN", "Gaussian Mixture Models", "Hierarchical Clustering"],
-    #     "description": "Segment customers based on behavior and characteristics"
-    # },
-    "Sales, Demand & Financial Forecasting Model": {
-        "models": ["Prophet", "ARIMA", "Exponential Smoothing"],
-        "description": "Time series forecasting for sales and demand prediction"
-    },
-    # "Customer Value & Retention Model": {
-    #     "models": ["Survival Analysis", "Random Forest", "XGBoost",
-    #                "Logistic Regression", "LTV Prediction Models"],
-    #     "description": "Predict customer churn probability and lifetime value"
-    # },
-    "Sentiment & Intent NLP Model": {
-        "models": ["BERT", "RoBERTa", "DistilBERT", "LSTM Networks", "TextCNN"],
-        "description": "Analyze customer sentiment and intent from text data"
-    },
-    "Inventory & Replenishment Optimization Model": {
-        "models": ["Economic Order Quantity (EOQ)", "Multi-Echelon Inventory Optimization",
-                   "Reinforcement Learning", "Stochastic Optimization"],
-        "description": "Optimize inventory levels and stock management"
-    },
-    "Logistics & Supplier Risk Model": {
-        "models": ["Supply Chain Risk Scoring Models", "Bayesian Networks",
-                   "Monte Carlo Simulation", "Decision Trees"],
-        "description": "Evaluate logistics performance and supplier risk"
-    },
-}
+# Allowed enterprise data domains
+ENTERPRISE_DATA_DOMAINS = [
+    "Sales",
+    "Inventory",
+    "Marketing",
+    "Finance",
+    "Customer",
+    "Operations",
+    "Logistics",
+    "Supply Chain",
+    "Human Resources",
+    "Product",
+    "Support",
+    "Risk & Compliance",
+    "Other"
+]
 
 
 def extract_columns_from_csv_file(file_path: str) -> List[str]:
@@ -61,8 +45,6 @@ def extract_columns_from_csv_file(file_path: str) -> List[str]:
         with open(file_path, newline="", encoding="utf-8") as csvfile:
             sample = csvfile.read(2048)
             csvfile.seek(0)
-
-            has_header = csv.Sniffer().has_header(sample)
             try:
                 dialect = csv.Sniffer().sniff(sample) if sample else csv.excel
             except Exception:
@@ -70,96 +52,121 @@ def extract_columns_from_csv_file(file_path: str) -> List[str]:
 
             reader = csv.reader(csvfile, dialect)
             header = next(reader, [])
-            return [col.strip() for col in header if col.strip()]
+            return [c.strip() for c in header if c.strip()]
     except Exception:
+        logger.exception("Failed to extract CSV columns: %s", file_path)
         return []
 
 
-def analyze_columns_with_gemini(columns: List[str],
-                                model_type: Optional[str] = None) -> Dict:
+def analyze_columns_with_gemini(columns: List[str]) -> Dict[str, Any]:
     """
-    Strict analysis using Gemini. NO fallbacks.
-    Gemini MUST return:
-        model_type, target_column, key_features (list), explanation
+    STRICT Gemini-only enterprise data classification.
 
-    Requirements enforced:
-      • target_column MUST match EXACTLY one of the CSV headers
-      • model_type MUST exist in MODEL_RECOMMENDATIONS
+    Output JSON:
+    {
+      "data_domain": "<ENTERPRISE_DATA_DOMAINS>",
+      "confidence": 0.0-1.0,
+      "key_columns": [...],
+      "explanation": "..."
+    }
     """
 
     if not GEMINI_API_KEY:
         return {
             "success": False,
-            "error": "Gemini API key is missing. Set GEMINI_API_KEY.",
+            "error": "GEMINI_API_KEY missing",
             "analysis": {}
         }
 
     if not columns:
         return {
             "success": False,
-            "error": "No CSV columns found.",
+            "error": "No CSV columns found",
             "analysis": {}
         }
 
     prompt = f"""
-Analyze ONLY the following CSV columns:
+You are an enterprise data architect.
 
-{columns}
+Your task is to classify the following CSV header into ONE enterprise data domain.
 
-Your response MUST be valid JSON with the structure:
+Return ONLY a single JSON object with this exact shape:
+
 {{
-  "model_type": "...",
-  "target_column": "...",
-  "key_features": ["...", "..."],
-  "explanation": "..."
+  "data_domain": "...",            // MUST be exactly one of: {ENTERPRISE_DATA_DOMAINS}
+  "confidence": 0.0,               // number between 0.0 and 1.0
+  "key_columns": ["col1", "col2"], // subset of provided columns ONLY
+  "explanation": "..."             // 1–2 sentence explanation
 }}
 
 STRICT RULES:
-• model_type MUST be one of these keys: {list(MODEL_RECOMMENDATIONS.keys())}
-• target_column MUST be EXACTLY one of the provided CSV column names
-• key_features MUST contain ONLY items from the CSV columns
-• DO NOT invent or guess new column names
-• DO NOT hallucinate fields like "Total Sales"
+- Use ONLY the column names provided
+- DO NOT invent columns
+- DO NOT suggest models, analytics, or ML
+- This is NOT modeling, ONLY data classification
+- If unsure, use "Other" with low confidence
+- Output MUST be valid JSON and NOTHING ELSE
+
+CSV header columns:
+{columns}
 """
 
     try:
+        import google.generativeai as genai
         model = genai.GenerativeModel("gemini-2.5-flash")
         resp = model.generate_content(prompt)
         raw = getattr(resp, "text", str(resp))
 
-        json_match = re.search(r"\{.*\}", raw, re.DOTALL)
-        if not json_match:
+        match = re.search(r"\{[\s\S]*\}", raw)
+        if not match:
             return {
                 "success": False,
-                "error": "Gemini returned non-JSON response.",
+                "error": "Gemini returned non-JSON",
                 "raw_response": raw,
                 "analysis": {}
             }
 
-        parsed = json.loads(json_match.group())
+        parsed = json.loads(match.group())
 
-        # strict validation
-        if parsed.get("model_type") not in MODEL_RECOMMENDATIONS:
-            raise ValueError(f"Invalid model_type: {parsed.get('model_type')}")
+        # Validate domain
+        domain = parsed.get("data_domain")
+        if domain not in ENTERPRISE_DATA_DOMAINS:
+            raise ValueError(f"Invalid data_domain: {domain}")
 
-        if parsed.get("target_column") not in columns:
-            raise ValueError(f"Gemini selected non-existent target column: "
-                             f"{parsed.get('target_column')}")
+        # Validate confidence
+        confidence = float(parsed.get("confidence"))
+        if not (0.0 <= confidence <= 1.0):
+            raise ValueError("confidence must be between 0 and 1")
 
-        key_feats = parsed.get("key_features", [])
-        if not isinstance(key_feats, list) or any(k not in columns for k in key_feats):
-            raise ValueError("key_features contains invalid or unknown columns.")
-        
-        print("Gemini analysis successful:", raw)
+        # Validate key columns
+        key_columns = parsed.get("key_columns", [])
+        if not isinstance(key_columns, list):
+            raise ValueError("key_columns must be a list")
+        for col in key_columns:
+            if col not in columns:
+                raise ValueError(f"Unknown column in key_columns: {col}")
+
+        explanation = parsed.get("explanation", "")
+        if not isinstance(explanation, str):
+            raise ValueError("explanation must be string")
+
+        analysis = {
+            "data_domain": domain,
+            "confidence": round(confidence, 3),
+            "key_columns": key_columns,
+            "explanation": explanation.strip()
+        }
+
+        logger.info("Gemini classified CSV as %s (%.2f)", domain, confidence)
 
         return {
             "success": True,
-            "analysis": parsed,
+            "analysis": analysis,
             "raw_response": raw
         }
 
     except Exception as e:
-        logger.exception("Gemini analysis failed: %s", e)
+        logger.exception("Gemini classification failed")
         return {
             "success": False,
             "error": str(e),
@@ -168,19 +175,12 @@ STRICT RULES:
         }
 
 
-def analyze_file_with_gemini(file_path: str,
-                             model_type: Optional[str] = None) -> Dict:
-    """Strict Gemini-only analysis. No fallback."""
+def analyze_file_with_gemini(file_path: str) -> Dict[str, Any]:
     columns = extract_columns_from_csv_file(file_path)
     if not columns:
         return {
             "success": False,
-            "error": "CSV header could not be read.",
+            "error": "CSV header could not be read",
             "analysis": {}
         }
-
-    return analyze_columns_with_gemini(columns, model_type)
-
-
-def get_available_models() -> dict:
-    return MODEL_RECOMMENDATIONS
+    return analyze_columns_with_gemini(columns)
