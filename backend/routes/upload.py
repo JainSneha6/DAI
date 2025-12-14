@@ -507,9 +507,11 @@ def list_uploaded_files():
                         if gemini.get("success"):
                             analysis = gemini.get("analysis", {})
                             domain = analysis.get("data_domain") or analysis.get("category") or "Other"
+                            row_count = analysis.get("row_count") or 0
 
                             meta["category"] = domain
                             meta["classification"] = _sanitize_for_json(analysis)
+                            meta["row_count"] = row_count
                             meta.setdefault("uploaded_at", datetime.utcnow().isoformat() + "Z")
 
                             _persist_meta(meta_dir, base_filename, meta)
@@ -520,7 +522,7 @@ def list_uploaded_files():
                         meta["category"] = "Unknown"
                 else:
                     meta["category"] = "Unknown"
-
+                
             items.append(_sanitize_for_json(meta))
 
         items.sort(key=lambda i: i.get("uploaded_at", ""), reverse=True)
