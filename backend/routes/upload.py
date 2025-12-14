@@ -18,7 +18,7 @@ from langchain_core.documents import Document
 from cyborgdb_core.integrations.langchain import CyborgVectorStore
 from cyborgdb_core import DBConfig
 from services.data_enrichment import combine_classification, summarize_csv, write_upload_metadata
-
+import math
 
 # Basic logger configuration (don't rely on third-party logger.configure calls here)
 logging.basicConfig(level=logging.INFO)
@@ -64,7 +64,7 @@ def upload_files():
     cyborg_index_storage = current_app.config.get("CYBORG_INDEX_STORAGE", "postgres")
     cyborg_config_storage = current_app.config.get("CYBORG_CONFIG_STORAGE", "postgres")
     cyborg_items_storage = current_app.config.get("CYBORG_ITEMS_STORAGE", "postgres")
-    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v7")
+    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v9")
     embedding_model = (
         current_app.config.get("CYBORG_EMBEDDING_MODEL")
         or os.environ.get("CYBORG_EMBEDDING_MODEL")
@@ -199,7 +199,7 @@ def upload_files():
 
         # Run analysis
         try:
-            gemini_response = analyze_file_with_gemini(save_path, model_type)
+            gemini_response = analyze_file_with_gemini(save_path)
         except Exception as e:
             logger.exception("Gemini analysis failed for %s: %s", save_path, e)
             gemini_response = {"error": str(e)}
@@ -233,17 +233,10 @@ def upload_files():
 
         if not csv_upsert_success:
             results.append({"filename": filename, "success": False, "error": "CSV embedding failed"})
-            continue  # Skip pipeline if CSV failed, or adjust as needed
-
-        # --- Data enrichment: classification + summarization + metadata persistence ---
+            continue  
         try:
-            # Summarize CSV (pandas-backed) - relatively cheap
             summary = summarize_csv(save_path)
-
-            # deduce category: prefer gemini, fallback to keyword classify
             category = combine_classification(gemini_response, summary.get("columns", []))
-
-            # Build metadata
             file_meta = {
                 "filename": filename,
                 "uploaded_at": datetime.utcnow().isoformat() + "Z",
@@ -451,3 +444,90 @@ def serve_model(filename):
     """Serve saved files from the models dir. Keeps path confined to MODELS_FOLDER."""
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
     return send_from_directory(models_dir, filename, as_attachment=True)
+
+def _sanitize_for_json(obj):
+    if obj is None:
+        return None
+    if isinstance(obj, (str, int, bool)):
+        return obj
+    if isinstance(obj, float):
+        return None if math.isnan(obj) or math.isinf(obj) else obj
+    if isinstance(obj, dict):
+        return {str(k): _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [_sanitize_for_json(v) for v in obj]
+    try:
+        json.dumps(obj)
+        return obj
+    except Exception:
+        return str(obj)
+
+
+def _persist_meta(meta_dir: str, filename: str, meta_obj: dict):
+    os.makedirs(meta_dir, exist_ok=True)
+    path = os.path.join(meta_dir, f"{filename}.meta.json")
+    safe = _sanitize_for_json(meta_obj)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(safe, fh, ensure_ascii=False, indent=2)
+
+
+@bp.route("/api/files", methods=["GET"])
+def list_uploaded_files():
+    upload_folder = current_app.config.get(
+        "UPLOAD_FOLDER", os.path.join(os.getcwd(), "uploads")
+    )
+    meta_dir = os.path.join(upload_folder, "metadata")
+    os.makedirs(meta_dir, exist_ok=True)
+
+    items = []
+
+    try:
+        for fname in os.listdir(meta_dir):
+            if not fname.endswith(".meta.json"):
+                continue
+
+            path = os.path.join(meta_dir, fname)
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    meta = json.load(fh)
+            except Exception:
+                logger.exception("Failed to read meta file %s", path)
+                continue
+
+            meta = _sanitize_for_json(meta)
+
+            # ---- ENSURE CATEGORY STRING ----
+            if not meta.get("category"):
+                base_filename = fname.replace(".meta.json", "")
+                csv_path = os.path.join(upload_folder, base_filename)
+
+                if os.path.exists(csv_path):
+                    try:
+                        gemini = analyze_file_with_gemini(csv_path)
+                        if gemini.get("success"):
+                            analysis = gemini.get("analysis", {})
+                            domain = analysis.get("data_domain") or analysis.get("category") or "Other"
+                            row_count = analysis.get("row_count") or 0
+
+                            meta["category"] = domain
+                            meta["classification"] = _sanitize_for_json(analysis)
+                            meta["row_count"] = row_count
+                            meta.setdefault("uploaded_at", datetime.utcnow().isoformat() + "Z")
+
+                            _persist_meta(meta_dir, base_filename, meta)
+                        else:
+                            meta["category"] = "Unknown"
+                    except Exception:
+                        logger.exception("Gemini classification failed")
+                        meta["category"] = "Unknown"
+                else:
+                    meta["category"] = "Unknown"
+                
+            items.append(_sanitize_for_json(meta))
+
+        items.sort(key=lambda i: i.get("uploaded_at", ""), reverse=True)
+        return jsonify({"success": True, "files": items})
+
+    except Exception as e:
+        logger.exception("Failed to list uploaded files")
+        return jsonify({"success": False, "error": str(e)}), 500

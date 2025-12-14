@@ -88,7 +88,7 @@ def _get_vector_store():
     Keep this for the LLM+RetrievalQA flow.
     """
     cyborg_api_key = "cyborg_de8158fd38be4b97a400d4712fa77e3d"
-    index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v7")
+    index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v9")
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
     keys_folder = os.path.join(models_dir, "cyborg_indexes")
     key_path = os.path.join(keys_folder, f"{index_name}.key")
@@ -199,7 +199,7 @@ def _get_cyborg_native_index():
         return None
 
     cyborg_api_key = "cyborg_de8158fd38be4b97a400d4712fa77e3d"
-    index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v7")
+    index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v9")
     models_dir = current_app.config.get("MODELS_FOLDER", os.path.join(os.getcwd(), "models"))
     keys_folder = os.path.join(models_dir, "cyborg_indexes")
     key_path = os.path.join(keys_folder, f"{index_name}.key")
@@ -238,31 +238,6 @@ def _get_cyborg_native_index():
     except Exception:
         logger.exception("create_or_load_index failed for %s", index_name)
         return None
-
-
-@bp.route("/api/files", methods=["GET"])
-def list_uploaded_files():
-    upload_folder = current_app.config.get("UPLOAD_FOLDER", os.path.join(os.getcwd(), "uploads"))
-    meta_dir = os.path.join(upload_folder, "metadata")
-    os.makedirs(meta_dir, exist_ok=True)
-    items = []
-    try:
-        for fname in os.listdir(meta_dir):
-            if not fname.endswith(".meta.json"):
-                continue
-            path = os.path.join(meta_dir, fname)
-            try:
-                with open(path, "r", encoding="utf-8") as fh:
-                    meta = json.load(fh)
-                items.append(meta)
-            except Exception:
-                logger.exception("Failed to read meta file %s", path)
-        # newest first
-        items.sort(key=lambda i: i.get("uploaded_at", ""), reverse=True)
-        return jsonify({"success": True, "files": items})
-    except Exception as e:
-        logger.exception("Failed to list uploaded metadata: %s", e)
-        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @bp.route("/api/chat", methods=["POST"])

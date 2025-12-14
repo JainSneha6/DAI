@@ -1,90 +1,122 @@
 # services/data_enrichment.py
 import os
 import json
-from typing import List, Dict, Optional, Tuple
+import math
+from typing import List, Dict, Optional, Any
 import logging
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
-# NOTE: pandas is optional but recommended
+# NOTE: pandas is optional but strongly recommended
 try:
     import pandas as pd
+    import numpy as np
 except Exception:
     pd = None
-    logger.warning("pandas not available: summarization will be limited")
+    np = None
+    logger.warning("pandas/numpy not available: summarization will be limited")
 
-# Basic category keys mapped to your MODEL_RECOMMENDATIONS labels
-CATEGORY_KEYWORDS = {
-    "Sales, Demand & Financial Forecasting Model": [
-        "sales", "revenue", "profit", "price", "quantity", "order", "amount", "total"
-    ],
-    "Pricing & Revenue Optimization Model": [
-        "price", "discount", "margin", "revenue", "rate", "charge", "pricing"
-    ],
-    "Marketing ROI & Attribution Model": [
-        "campaign", "channel", "click", "impression", "ctr", "cost", "cpa", "cac", "utm", "source"
-    ],
-    "Customer Segmentation & Modeling": [
-        "customer", "segment", "age", "gender", "region", "cluster", "persona"
-    ],
-    "Customer Value & Retention Model": [
-        "churn", "retention", "lifetime", "ltv", "renewal", "cancel", "subscriber"
-    ],
-    "Sentiment & Intent NLP Model": [
-        "review", "comment", "feedback", "text", "sentiment", "message", "tweet"
-    ],
-    "Inventory & Replenishment Optimization Model": [
-        "inventory", "stock", "sku", "warehouse", "on_hand", "reorder", "lead_time"
-    ],
-    "Logistics & Supplier Risk Model": [
-        "supplier", "shipment", "carrier", "delivery", "eta", "transit", "lead_time", "delay"
-    ],
-}
 
-def fallback_classify(columns: List[str]) -> str:
+def _to_serializable(value: Any):
     """
-    Choose the best category by matching header keywords.
-    Returns the best-matching category or 'Auto-detect (Best-fit)' if unsure.
-    """
-    if not columns:
-        return "Auto-detect (Best-fit)"
-
-    cols_lower = [c.lower() for c in columns]
-    scores = {cat: 0 for cat in CATEGORY_KEYWORDS}
-    for idx, c in enumerate(cols_lower):
-        for cat, kws in CATEGORY_KEYWORDS.items():
-            for kw in kws:
-                if kw in c or c in kw:
-                    scores[cat] += 1
-    # Choose highest score
-    best = max(scores.items(), key=lambda kv: kv[1])
-    if best[1] == 0:
-        return "Auto-detect (Best-fit)"
-    return best[0]
-
-def combine_classification(gemini_analysis: Optional[Dict], columns: List[str]) -> str:
-    """
-    Determine category: prefer validated Gemini output; if missing/fails, fallback to keyword classifier.
+    Convert pandas / numpy types (and others) to JSON-serializable Python types.
     """
     try:
-        if isinstance(gemini_analysis, dict) and gemini_analysis.get("success") and gemini_analysis.get("analysis"):
-            m = gemini_analysis.get("analysis")
-            model_type = m.get("model_type")
-            if model_type:
-                # keep as-is if in known categories
-                if model_type in CATEGORY_KEYWORDS or model_type == "Auto-detect (Best-fit)":
-                    return model_type
+        # pandas/numpy scalars
+        if pd is not None and isinstance(value, (pd.Timestamp, pd.Timedelta)):
+            try:
+                return value.isoformat()
+            except Exception:
+                return str(value)
+        if np is not None and isinstance(value, (np.integer, np.int_)):
+            return int(value)
+        if np is not None and isinstance(value, (np.floating, np.float_)):
+            v = float(value)
+            if math.isnan(v) or math.isinf(v):
+                return None
+            return v
+        if np is not None and isinstance(value, np.bool_):
+            return bool(value)
+        if isinstance(value, (int, float, str, bool)):
+            if isinstance(value, float):
+                if math.isnan(value) or math.isinf(value):
+                    return None
+            return value
+        if value is None:
+            return None
+        # for numpy arrays or pandas arrays -> list
+        if np is not None and isinstance(value, (np.ndarray,)):
+            return [_to_serializable(v) for v in value.tolist()]
+        # fallback
+        return str(value)
     except Exception:
-        logger.debug("Gemini analysis unusable, using fallback")
-
-    # fallback
-    return fallback_classify(columns)
+        return str(value)
 
 
-def summarize_csv(file_path: str, sample_rows: int = 3) -> Dict:
+def _sanitize_record(rec: Dict[str, Any]) -> Dict[str, Any]:
+    """Sanitize all values in a dict for JSON encoding."""
+    out = {}
+    for k, v in (rec or {}).items():
+        if isinstance(v, dict):
+            out[k] = _sanitize_record(v)
+        elif isinstance(v, list):
+            out[k] = [_to_serializable(x) for x in v]
+        else:
+            out[k] = _to_serializable(v)
+    return out
+
+
+def combine_classification(
+    gemini_analysis: Optional[Dict],
+    columns: List[str]
+) -> Optional[Dict]:
     """
-    Produce a summary dict: columns, dtypes, row_count (if pandas), sample rows,
-    candidate time columns, numeric columns, simple aggregations.
+    Use Gemini analyzer as the single source of truth for enterprise data classification.
+
+    Returns:
+    {
+        "data_domain": str,
+        "confidence": float,
+        "key_columns": List[str],
+        "explanation": str
+    }
+    or None if unavailable
+    """
+    if not isinstance(gemini_analysis, dict):
+        return None
+
+    if not gemini_analysis.get("success"):
+        return None
+
+    analysis = gemini_analysis.get("analysis")
+    if not isinstance(analysis, dict):
+        return None
+
+    data_domain = analysis.get("data_domain") or analysis.get("category")
+    if not data_domain:
+        return None
+
+    return {
+        "data_domain": data_domain,
+        "confidence": analysis.get("confidence"),
+        "key_columns": analysis.get("key_columns", []),
+        "explanation": analysis.get("explanation", "")
+    }
+
+
+def summarize_csv(file_path: str, sample_rows: int = 3, max_rows: Optional[int] = 100000) -> Dict:
+    """
+    Produce a comprehensive summary metadata for a CSV file.
+
+    Output keys include:
+    - columns, dtypes, row_count, sample_rows, time_columns, numeric_columns
+    - categorical_columns
+    - categorical_summary: per categorical column -> { unique_count, top_values: [{value, count, pct}], missing_count }
+    - numerical_summary: per numeric column -> { count, mean, min, max, sum, std, missing_count }
+    - grouped_analysis: for each categorical column (if cardinality is reasonable) -> for each numeric column a list of group-aggregations
+      Each group-aggregation = { category_value, count, mean, sum, min, max }
+    - aggregations: same as numerical_summary for convenience
     """
     summary = {
         "columns": [],
@@ -93,83 +125,220 @@ def summarize_csv(file_path: str, sample_rows: int = 3) -> Dict:
         "sample_rows": [],
         "time_columns": [],
         "numeric_columns": [],
-        "aggregations": {},  # per numeric column: mean/min/max/sum
+        "categorical_columns": [],
+        "categorical_summary": {},  # per cat col: { unique_count, missing_count, top_values: [{value,count,pct}] }
+        "numerical_summary": {},    # per num col: { count, mean, min, max, sum, std, missing_count }
+        "grouped_analysis": {},     # per cat col: { numeric_col: [ {category_value, count, mean, sum, min, max}, ... ] }
+        "aggregations": {},
     }
 
-    # Try to use pandas for robust parsing
+    # If pandas not available -- fallback: minimal header and sample
     if pd is None:
-        # fallback to reading first line as header
         try:
             with open(file_path, "r", encoding="utf-8") as fh:
                 header = fh.readline().strip().split(",")
                 cols = [c.strip() for c in header if c.strip()]
                 summary["columns"] = cols
-        except Exception as e:
-            logger.exception("Could not read CSV header: %s", e)
+                # sample rows
+                rows = []
+                for i, line in enumerate(fh):
+                    if i >= sample_rows:
+                        break
+                    rows.append([v.strip() for v in line.strip().split(",")])
+                summary["sample_rows"] = rows
+        except Exception:
+            logger.exception("Could not read CSV header (no pandas)")
         return summary
 
+    # With pandas available: robust profiling
     try:
-        df = pd.read_csv(file_path, nrows=100000)  # try to load - memory permitting
+        # load up to max_rows rows (None = full)
+        if max_rows:
+            df = pd.read_csv(file_path, nrows=max_rows)
+        else:
+            df = pd.read_csv(file_path)
+
+        # core info
         summary["row_count"] = int(len(df))
         summary["columns"] = list(df.columns.astype(str))
-        # dtypes
+
+        # sample rows (safe serialization)
+        try:
+            sample_df = df.head(sample_rows)
+            summary["sample_rows"] = sample_df.replace({np.nan: None}).to_dict(orient="records")
+        except Exception:
+            summary["sample_rows"] = []
+
+        # dtypes and classification of numeric / time / categorical
         for c in df.columns:
-            summary["dtypes"][str(c)] = str(df[c].dtype)
+            cname = str(c)
+            dtype = str(df[c].dtype)
+            summary["dtypes"][cname] = dtype
+
+            # numeric
             if pd.api.types.is_numeric_dtype(df[c].dtype):
-                summary["numeric_columns"].append(str(c))
-            # naive time detection
-            if "date" in str(c).lower() or "time" in str(c).lower() or pd.api.types.is_datetime64_any_dtype(df[c].dtype):
-                summary["time_columns"].append(str(c))
-        # sample rows
-        sample_df = df.head(sample_rows)
-        summary["sample_rows"] = sample_df.to_dict(orient="records")
-        # aggregations
+                summary["numeric_columns"].append(cname)
+
+            # datetime-like
+            if ("date" in cname.lower()) or ("time" in cname.lower()) or pd.api.types.is_datetime64_any_dtype(df[c].dtype):
+                summary["time_columns"].append(cname)
+
+        # identify categorical columns: object, bool, or numeric with low cardinality
+        for c in df.columns:
+            cname = str(c)
+            is_numeric = pd.api.types.is_numeric_dtype(df[c].dtype)
+            is_object = pd.api.types.is_object_dtype(df[c].dtype) or pd.api.types.is_bool_dtype(df[c].dtype) or pd.api.types.is_categorical_dtype(df[c].dtype)
+
+            # treat numeric with low unique values as categorical (e.g., codes)
+            try:
+                nunique = int(df[c].nunique(dropna=True))
+            except Exception:
+                nunique = None
+
+            if is_object or (not is_numeric) or (is_numeric and nunique is not None and nunique <= 50):
+                summary["categorical_columns"].append(cname)
+
+        # Numerical summary
         for c in summary["numeric_columns"]:
             try:
                 col = pd.to_numeric(df[c], errors="coerce")
-                summary["aggregations"][c] = {
-                    "count": int(col.count()),
-                    "mean": float(col.mean()) if col.count() else None,
-                    "min": float(col.min()) if col.count() else None,
-                    "max": float(col.max()) if col.count() else None,
-                    "sum": float(col.sum()) if col.count() else None,
+                count = int(col.count())
+                missing = int(len(col) - count)
+                if count:
+                    mean = float(col.mean())
+                    _min = float(col.min())
+                    _max = float(col.max())
+                    _sum = float(col.sum())
+                    std = float(col.std()) if count > 1 else 0.0
+                else:
+                    mean = None
+                    _min = None
+                    _max = None
+                    _sum = None
+                    std = None
+
+                summary["numerical_summary"][c] = {
+                    "count": count,
+                    "missing_count": missing,
+                    "mean": _to_serializable(mean),
+                    "min": _to_serializable(_min),
+                    "max": _to_serializable(_max),
+                    "sum": _to_serializable(_sum),
+                    "std": _to_serializable(std),
+                }
+                # also aggregate key fields for backwards compatibility
+                summary["aggregations"][c] = summary["numerical_summary"][c]
+            except Exception:
+                logger.exception("Failed numerical summary for column %s", c)
+
+        # Categorical summary (unique counts and top values)
+        for c in summary["categorical_columns"]:
+            try:
+                # treat values as strings for counting but preserve NaNs
+                ser = df[c].fillna("__NULL__").astype(str)
+                vc = ser.value_counts(dropna=False)
+                total = int(vc.sum())
+                # top values (limit to top 10)
+                top_n = 10
+                top = []
+                for val, cnt in vc.head(top_n).items():
+                    if val == "__NULL__":
+                        display_val = None
+                    else:
+                        display_val = val
+                    top.append({
+                        "value": _to_serializable(display_val),
+                        "count": int(cnt),
+                        "pct": round(int(cnt) / total, 4) if total else 0.0
+                    })
+                unique_count = int(vc.shape[0])
+                missing_count = int((df[c].isna()).sum())
+                summary["categorical_summary"][c] = {
+                    "unique_count": unique_count,
+                    "missing_count": missing_count,
+                    "top_values": top
                 }
             except Exception:
+                logger.exception("Failed categorical summary for column %s", c)
+
+        # Grouped analysis: for each categorical column (only if cardinality reasonable),
+        # compute aggregated numeric stats per category for each numeric column.
+        grouped = {}
+        # threshold config
+        MAX_CARDINALITY_FOR_GROUPING = 500   # skip grouping for columns with more than this many unique values
+        MAX_GROUPS_RETURN = 50              # return only top N groups by count to avoid huge payloads
+
+        for cat_col in summary["categorical_columns"]:
+            try:
+                nunique = int(df[cat_col].nunique(dropna=True))
+            except Exception:
+                nunique = None
+
+            # skip grouping when cardinality too high (or when no numeric columns)
+            if not summary["numeric_columns"] or (nunique is not None and nunique > MAX_CARDINALITY_FOR_GROUPING):
                 continue
 
-        # if time + numeric present, compute simple trend for the top numeric column (daily/weekly)
-        if summary["time_columns"] and summary["numeric_columns"]:
-            tcol = summary["time_columns"][0]
-            ncol = summary["numeric_columns"][0]
-            try:
-                df[tcol] = pd.to_datetime(df[tcol], errors="coerce")
-                df[ncol] = pd.to_numeric(df[ncol], errors="coerce")
-                ts = df.dropna(subset=[tcol, ncol])
-                if not ts.empty:
-                    # aggregate by date
-                    ts_agg = ts.set_index(tcol).resample("D")[ncol].sum().fillna(0)
-                    # keep last 30 days
-                    last = ts_agg.tail(30)
-                    summary["trend_last_30_days"] = last.reset_index().rename(columns={tcol: "date", ncol: "value"}).to_dict(orient="records")
-            except Exception:
-                logger.debug("Failed to compute trend", exc_info=True)
+            # build grouped aggregations for each numeric column
+            cat_group = {}
+            for num_col in summary["numeric_columns"]:
+                try:
+                    # compute groupby aggregations; convert to records; limit to most frequent groups
+                    gb = (
+                        df.groupby(cat_col, dropna=False)[num_col]
+                        .agg(["count", "mean", "sum", "min", "max"])
+                        .reset_index()
+                    )
+                    # replace NaN keys with None for readability
+                    # sort groups by count desc
+                    if "count" in gb.columns:
+                        gb = gb.sort_values(by="count", ascending=False)
+                    # limit groups
+                    gb = gb.head(MAX_GROUPS_RETURN)
+                    groups_list = []
+                    for _, row in gb.iterrows():
+                        key = row[cat_col]
+                        # normalize key (NaN -> None)
+                        if pd.isna(key):
+                            key_val = None
+                        else:
+                            key_val = _to_serializable(key)
+                        groups_list.append({
+                            "category_value": key_val,
+                            "count": int(row["count"]) if not pd.isna(row["count"]) else 0,
+                            "mean": _to_serializable(row["mean"]),
+                            "sum": _to_serializable(row["sum"]),
+                            "min": _to_serializable(row["min"]),
+                            "max": _to_serializable(row["max"]),
+                        })
+                    cat_group[num_col] = groups_list
+                except Exception:
+                    logger.exception("Failed grouped analysis for cat %s, num %s", cat_col, num_col)
+            if cat_group:
+                grouped[cat_col] = cat_group
+
+        summary["grouped_analysis"] = grouped
+
     except Exception as e:
         logger.exception("Failed to summarize CSV %s: %s", file_path, e)
 
+    # Final sanitization - ensure all values JSON serializable
+    summary = _sanitize_record(summary)
     return summary
 
 
 def write_upload_metadata(upload_folder: str, filename: str, metadata: Dict):
     """
-    Persist metadata for an uploaded file next to the uploads folder.
+    Persist file metadata as JSON (ensures folder exists).
     """
     try:
         meta_dir = os.path.join(upload_folder, "metadata")
         os.makedirs(meta_dir, exist_ok=True)
         meta_path = os.path.join(meta_dir, f"{filename}.meta.json")
+        # sanitize before writing
+        safe = _sanitize_record(metadata)
         with open(meta_path, "w", encoding="utf-8") as fh:
-            json.dump(metadata, fh, default=str, indent=2)
+            json.dump(safe, fh, ensure_ascii=False, indent=2)
         return meta_path
-    except Exception as e:
-        logger.exception("Failed to write metadata: %s", e)
+    except Exception:
+        logger.exception("Failed to write metadata")
         return None
