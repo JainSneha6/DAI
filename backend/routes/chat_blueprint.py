@@ -29,7 +29,7 @@ except Exception:
 # INIT GEMINI CLIENT
 # -------------------------------------------------------------------
 def init_gemini():
-    api_key = "AIzaSyBOPDscoogNOm6GWwaEuEwG3HmW79yEDp4"
+    api_key = "AIzaSyBfHvrmYb1BX0Ne8Ue98-F_MxK32-rWV-4"
     if not api_key:
         logger.error("Missing GEMINI_API_KEY")
         return None

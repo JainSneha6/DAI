@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 # STRICT: environment variable only
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBOPDscoogNOm6GWwaEuEwG3HmW79yEDp4")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBfHvrmYb1BX0Ne8Ue98-F_MxK32-rWV-4")
 
 if GEMINI_API_KEY:
     try:
