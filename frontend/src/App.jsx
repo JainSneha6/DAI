@@ -4,6 +4,7 @@ import HomePage from './pages/Homepage';
 import Input from './pages/Input';
 import TimeSeries from './pages/TimeSeries';
 import Dashboard from './pages/Dashboard';
+import Chatbot from './pages/ChatWithData';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path='/input' element = {<Input />} />
         <Route path="/dashboard" element = {<Dashboard/>} />
+        <Route path="/chat" element = {<Chatbot/>} />
         <Route path="/time-series" element = {<TimeSeries/>} />
       </Routes>
     </Router>
