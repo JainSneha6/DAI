@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 # STRICT: environment variable only
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyAxZtkHwoNOwyhN1gyxNk91X3zkc8x2cos")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyA8Er4lS33jWq7ySNennyZra_CBqyUFBFE")
 
 if GEMINI_API_KEY:
     try:
@@ -129,6 +129,7 @@ enterprise_data_to_models = [
 # Convert mapping to a dict for quick lookup
 _DOMAIN_TO_MODELS: Dict[str, List[str]] = {entry["data_domain"]: entry["models"] for entry in enterprise_data_to_models}
 
+
 def extract_columns_from_csv_file(file_path: str) -> List[str]:
     """Read CSV and return header column names."""
     try:
@@ -147,17 +148,35 @@ def extract_columns_from_csv_file(file_path: str) -> List[str]:
         logger.exception("Failed to extract CSV columns: %s", file_path)
         return []
 
+
 def analyze_columns_with_gemini(columns: List[str]) -> Dict[str, Any]:
     """
-    STRICT Gemini-only enterprise data classification.
+    STRICT Gemini-only enterprise data classification + per-model target suggestion.
 
-    Output JSON:
+    Output JSON must be a single JSON object with this exact (top-level) shape:
+
     {
-      "data_domain": "<ENTERPRISE_DATA_DOMAINS>",
+      "data_domain": "<one of ENTERPRISE_DATA_DOMAINS>",
       "confidence": 0.0-1.0,
-      "key_columns": [...],
-      "explanation": "..."
+      "key_columns": [...],            // subset of provided columns ONLY
+      "explanation": "...",            // 1–2 sentence explanation
+      "model_targets": {               // for each model mapped to the chosen domain
+          "<model name>": "<target_column name or null>", 
+          ...
+      }
     }
+
+    STRICT RULES (must be obeyed by the model):
+    - Use ONLY the column names provided below (do NOT invent columns)
+    - The top-level "data_domain" MUST be exactly one of ENTERPRISE_DATA_DOMAINS
+    - "confidence" must be a number between 0.0 and 1.0
+    - "key_columns" must be a list and only contain names from the provided columns
+    - "model_targets" must be an object. For each model that maps to the returned domain,
+      return either a single column name (must be one of the provided columns) or null
+      if no suitable target exists.
+    - Do NOT suggest models, analytics, or ML process descriptions beyond the required fields
+    - If unsure about the domain or targets, use "Other" and null targets with low confidence
+    - Output MUST be valid JSON and NOTHING ELSE
     """
 
     if not GEMINI_API_KEY:
@@ -174,30 +193,50 @@ def analyze_columns_with_gemini(columns: List[str]) -> Dict[str, Any]:
             "analysis": {}
         }
 
+    # Build a compact mapping string for the model to reference which models are mapped to each domain.
+    domain_to_models_text = json.dumps(_DOMAIN_TO_MODELS, indent=2)
+
     prompt = f"""
 You are an enterprise data architect.
 
-Your task is to classify the following CSV header into ONE enterprise data domain.
+Classify the following CSV header into EXACTLY ONE enterprise data domain and for each model that is mapped to that domain, propose a single primary TARGET COLUMN (from the provided CSV header) that would be appropriate as the target variable for that model.
 
-Return ONLY a single JSON object with this exact shape:
+You are given:
+- The allowed enterprise data domains (use exactly these strings): {json.dumps(ENTERPRISE_DATA_DOMAINS)}
+- A domain -> models mapping (do NOT change model names): {domain_to_models_text}
+
+Task:
+1) Choose exactly one "data_domain" from the allowed list that best fits the provided CSV header columns.
+2) Return the model_targets map containing an entry for every model that is mapped to the chosen domain (as shown in the domain->models mapping above).
+   - For each model, set the value to either a single column name from the provided CSV header (the primary target variable), OR null if no suitable target column is present.
+   - Do NOT invent or modify column names; use only names from the CSV header provided below.
+3) Provide a "confidence" score (0.0-1.0) for the domain classification.
+4) Provide "key_columns" as a subset of the provided columns that support your classification.
+5) Provide "explanation" (1-2 sentences).
+
+Return ONLY a single JSON object with this EXACT shape (no extra fields, no commentary, valid JSON only):
 
 {{
-  "data_domain": "...",            // MUST be exactly one of: {ENTERPRISE_DATA_DOMAINS}
+  "data_domain": "...",            // exactly one of the allowed domains
   "confidence": 0.0,               // number between 0.0 and 1.0
   "key_columns": ["col1", "col2"], // subset of provided columns ONLY
-  "explanation": "..."             // 1–2 sentence explanation
+  "explanation": "...",            // 1–2 sentence explanation
+  "model_targets": {{
+      "<model name>": "<column name or null>",
+      "...": "..."
+  }}
 }}
 
-STRICT RULES:
-- Use ONLY the column names provided
-- DO NOT invent columns
-- DO NOT suggest models, analytics, or ML
-- This is NOT modeling, ONLY data classification
-- If unsure, use "Other" with low confidence
-- Output MUST be valid JSON and NOTHING ELSE
-
 CSV header columns:
-{columns}
+{json.dumps(columns)}
+
+STRICT RULES:
+- Use ONLY the column names provided in the CSV header above.
+- DO NOT invent columns.
+- Each model in model_targets MUST be one of the models listed for the chosen domain.
+- Each target value must be either a string equal to a column name above, or null.
+- If unsure, pick "Other" domain, set low confidence, and set all model targets to null.
+- Output MUST be valid JSON and NOTHING ELSE.
 """
 
     try:
@@ -206,6 +245,7 @@ CSV header columns:
         resp = model.generate_content(prompt)
         raw = getattr(resp, "text", str(resp))
 
+        # extract first JSON object found
         match = re.search(r"\{[\s\S]*\}", raw)
         if not match:
             return {
@@ -239,14 +279,60 @@ CSV header columns:
         if not isinstance(explanation, str):
             raise ValueError("explanation must be string")
 
+        # Validate model_targets
+        model_targets_raw = parsed.get("model_targets", {})
+        if not isinstance(model_targets_raw, dict):
+            raise ValueError("model_targets must be a dict")
+
+        # Allowed models for the detected domain
+        allowed_models_for_domain = _DOMAIN_TO_MODELS.get(domain, [])
+
+        model_targets: Dict[str, Optional[str]] = {}
+        for model_name, target_value in model_targets_raw.items():
+            # model name must be one of allowed for chosen domain
+            if model_name not in allowed_models_for_domain:
+                raise ValueError(f"Model '{model_name}' not mapped to domain '{domain}'")
+
+            # allow either a string (column name) or null
+            if target_value is None:
+                model_targets[model_name] = None
+                continue
+
+            if isinstance(target_value, str):
+                t = target_value.strip()
+                if t == "" or t.lower() == "null":
+                    model_targets[model_name] = None
+                else:
+                    if t not in columns:
+                        raise ValueError(f"Unknown column in model_targets for model '{model_name}': {t}")
+                    model_targets[model_name] = t
+            else:
+                # in case the model returned a small object (e.g. {"target_column": "X", ...})
+                if isinstance(target_value, dict):
+                    # try to pick a field named target_column or target
+                    t = target_value.get("target_column") or target_value.get("target")
+                    if t is None:
+                        model_targets[model_name] = None
+                    elif not isinstance(t, str):
+                        raise ValueError(f"Invalid target value type for model '{model_name}'")
+                    else:
+                        if t not in columns:
+                            raise ValueError(f"Unknown column in model_targets for model '{model_name}': {t}")
+                        model_targets[model_name] = t
+                else:
+                    raise ValueError(f"Invalid target value for model '{model_name}': {target_value}")
+
         analysis = {
             "data_domain": domain,
             "confidence": round(confidence, 3),
             "key_columns": key_columns,
-            "explanation": explanation.strip()
+            "explanation": explanation.strip(),
+            "model_targets": model_targets
         }
 
-        logger.info("Gemini classified CSV as %s (%.2f)", domain, confidence)
+        print(raw)
+
+        logger.info("Gemini classified CSV as %s (%.2f) with model targets: %s", domain, confidence, model_targets)
 
         return {
             "success": True,
@@ -273,6 +359,7 @@ def analyze_file_with_gemini(file_path: str) -> Dict[str, Any]:
             "analysis": {}
         }
     return analyze_columns_with_gemini(columns)
+
 
 def get_models_for_domain(data_domain: str) -> List[str]:
     """Return the suggested models for a given enterprise data domain."""
@@ -350,9 +437,10 @@ def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], mod
         logger.exception("trigger_models_for_file failed")
         return {"success": False, "error": str(e)}
 
+
 def analyze_and_trigger(file_path: str, models_dir: str = "models", **kwargs) -> Dict[str, Any]:
     """
-    1) Analyze CSV headers with Gemini (classify to enterprise domain)
+    1) Analyze CSV headers with Gemini (classify to enterprise domain and suggest per-model targets)
     2) Map domain -> models and trigger the implemented runners
     Returns combined report.
     """
@@ -366,6 +454,7 @@ def analyze_and_trigger(file_path: str, models_dir: str = "models", **kwargs) ->
         "gemini_response": gemini_resp,
         "trigger_report": trigger_report
     }
+
 
 if __name__ == "__main__":
     import argparse

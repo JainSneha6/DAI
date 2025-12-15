@@ -314,7 +314,7 @@ def upload_files():
                                 coerced = _pd.to_numeric(sample_df[kc], errors="coerce")
                                 if coerced.notna().sum() > 0:
                                     target_col_hint = kc
-                                    logger.info("Using Gemini key_column '%s' as target_col_hint for %s", kc, filename)
+
                                     break
                     except Exception:
                         logger.exception("Failed to sample CSV to validate key_columns for %s", filename)

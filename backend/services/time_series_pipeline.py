@@ -714,11 +714,40 @@ def run_time_series_pipeline(
     if datetime_col is None:
         raise ValueError("Could not reliably detect a datetime column. Please provide an explicit datetime column named one of: " + ", ".join(COMMON_DATE_KEYWORDS))
 
+    # ------------------------
+    # CHANGED: derive gemini_target from model_targets map (if present)
+    # ------------------------
     gemini_target = None
     if gemini_analysis:
-        gemini_target = gemini_analysis.get("analysis", {}).get("target_column")
+        analysis = gemini_analysis.get("analysis", {}) or {}
+        # model_targets expected shape: { "<model name>": "<column name or null>", ... }
+        model_targets = analysis.get("model_targets") or {}
+        # Accept exact model name mapping used elsewhere
+        model_key = "Sales, Demand & Financial Forecasting Model"
+        if isinstance(model_targets, dict):
+            # target can be string or null; if nested dict, allow {"target_column": "X"} shape too
+            target_val = model_targets.get(model_key)
+            if isinstance(target_val, dict):
+                # attempt to extract common keys
+                gemini_target = target_val.get("target_column") or target_val.get("target") or None
+            else:
+                gemini_target = target_val
+    # If gemini didn't provide model_targets, fallback to legacy single key or hint
+    if not gemini_target and gemini_analysis:
+        # backward compatibility: older shape may have "target_column"
+        legacy_target = gemini_analysis.get("analysis", {}).get("target_column")
+        if legacy_target:
+            gemini_target = legacy_target
 
-    target_col = detect_target_column(df_raw, gemini_target=gemini_target or target_col_hint)
+    # Use provided hint if gemini_target is falsy
+    if not gemini_target:
+        gemini_target = target_col_hint
+
+    # ------------------------
+    # End CHANGED
+    # ------------------------
+
+    target_col = detect_target_column(df_raw, gemini_target=gemini_target)
     if target_col is None:
         raise ValueError("No explicit numeric target column supplied by Gemini or hint. Aborting in strict mode.")
 
@@ -864,6 +893,13 @@ def run_time_series_pipeline(
         "train_end": str(train_df.index.max()),
         "created_at": datetime.utcnow().isoformat() + "Z"
     }
+
+    # include gemini-provided model_targets for traceability if present
+    try:
+        if gemini_analysis:
+            metadata["gemini_model_targets"] = gemini_analysis.get("analysis", {}).get("model_targets")
+    except Exception:
+        pass
 
     if best_model_name == "SARIMAX_ARIMA":
         best_order = best_model_info.get("order")
