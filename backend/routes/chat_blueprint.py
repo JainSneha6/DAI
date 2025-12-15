@@ -29,7 +29,7 @@ except Exception:
 # INIT GEMINI CLIENT
 # -------------------------------------------------------------------
 def init_gemini():
-    api_key = "AIzaSyBfHvrmYb1BX0Ne8Ue98-F_MxK32-rWV-4"
+    api_key = "AIzaSyAxZtkHwoNOwyhN1gyxNk91X3zkc8x2cos"
     if not api_key:
         logger.error("Missing GEMINI_API_KEY")
         return None
@@ -58,7 +58,7 @@ def get_vector_store():
             return None
 
         cyborg_index_name = current_app.config.get(
-            "CYBORG_INDEX_NAME", "embedded_index_v11"
+            "CYBORG_INDEX_NAME", "embedded_index_v12"
         )
 
         models_dir = current_app.config.get(

@@ -1,6 +1,3 @@
-# services/gemini_analyzer.py
-# Additions: domain->models mapping + model dispatcher to trigger model files
-
 import os
 import csv
 import json
@@ -11,7 +8,7 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 # STRICT: environment variable only
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBfHvrmYb1BX0Ne8Ue98-F_MxK32-rWV-4")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyAxZtkHwoNOwyhN1gyxNk91X3zkc8x2cos")
 
 if GEMINI_API_KEY:
     try:
@@ -40,9 +37,6 @@ ENTERPRISE_DATA_DOMAINS = [
     "Other"
 ]
 
-# -------------------------
-# Enterprise domain -> suggested models mapping
-# -------------------------
 enterprise_data_to_models = [
     {
         "data_domain": "Sales",
@@ -98,6 +92,7 @@ enterprise_data_to_models = [
     {
         "data_domain": "Supply Chain",
         "models": [
+            "Sales, Demand & Financial Forecasting Model",
             "Inventory & Replenishment Optimization Model",
             "Logistics & Supplier Risk Model"
         ]
@@ -134,10 +129,6 @@ enterprise_data_to_models = [
 # Convert mapping to a dict for quick lookup
 _DOMAIN_TO_MODELS: Dict[str, List[str]] = {entry["data_domain"]: entry["models"] for entry in enterprise_data_to_models}
 
-
-# -------------------------
-# Existing CSV helpers (unchanged)
-# -------------------------
 def extract_columns_from_csv_file(file_path: str) -> List[str]:
     """Read CSV and return header column names."""
     try:
@@ -156,10 +147,6 @@ def extract_columns_from_csv_file(file_path: str) -> List[str]:
         logger.exception("Failed to extract CSV columns: %s", file_path)
         return []
 
-
-# -------------------------
-# Gemini column classification (unchanged)
-# -------------------------
 def analyze_columns_with_gemini(columns: List[str]) -> Dict[str, Any]:
     """
     STRICT Gemini-only enterprise data classification.
@@ -287,10 +274,6 @@ def analyze_file_with_gemini(file_path: str) -> Dict[str, Any]:
         }
     return analyze_columns_with_gemini(columns)
 
-
-# -------------------------
-# New: domain -> model mapping + dispatcher
-# -------------------------
 def get_models_for_domain(data_domain: str) -> List[str]:
     """Return the suggested models for a given enterprise data domain."""
     return _DOMAIN_TO_MODELS.get(data_domain, [])
@@ -367,10 +350,6 @@ def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], mod
         logger.exception("trigger_models_for_file failed")
         return {"success": False, "error": str(e)}
 
-
-# -------------------------
-# Convenience: run classification + trigger models in one call
-# -------------------------
 def analyze_and_trigger(file_path: str, models_dir: str = "models", **kwargs) -> Dict[str, Any]:
     """
     1) Analyze CSV headers with Gemini (classify to enterprise domain)
@@ -388,8 +367,6 @@ def analyze_and_trigger(file_path: str, models_dir: str = "models", **kwargs) ->
         "trigger_report": trigger_report
     }
 
-
-# If used as script for quick debug
 if __name__ == "__main__":
     import argparse
 
