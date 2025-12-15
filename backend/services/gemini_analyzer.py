@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 # STRICT: environment variable only
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyA8Er4lS33jWq7ySNennyZra_CBqyUFBFE")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyCxngolfSKcBnEDv69T1j3lm8hQt5YAtrE")
 
 if GEMINI_API_KEY:
     try:
@@ -365,7 +365,6 @@ def get_models_for_domain(data_domain: str) -> List[str]:
     """Return the suggested models for a given enterprise data domain."""
     return _DOMAIN_TO_MODELS.get(data_domain, [])
 
-
 def _call_sales_forecasting_runner(file_path: str, gemini_response: Dict[str, Any], models_dir: str = "models", **kwargs) -> Dict[str, Any]:
     """
     Trigger the strict time-series pipeline for Sales/Demand forecasting.
@@ -391,6 +390,29 @@ def _call_sales_forecasting_runner(file_path: str, gemini_response: Dict[str, An
     except Exception as e:
         logger.exception("Sales forecasting pipeline failed: %s", e)
         return {"success": False, "error": "Sales forecasting pipeline failed", "exception": str(e)}
+
+def _call_marketing_mmm_runner(file_path: str, gemini_response: Dict[str, Any], models_dir: str = "models", **kwargs) -> Dict[str, Any]:
+    """
+    Trigger the Marketing ROI & Attribution pipeline.
+    Injects the canonical model_type so the marketing_mmm_pipeline entry point will accept it.
+    """
+    try:
+        # lazy import so we only pay the cost when needed
+        from services import marketing_mmm_pipeline
+    except Exception as e:
+        logger.exception("Failed to import marketing_mmm_pipeline: %s", e)
+        return {"success": False, "error": "marketing_mmm_pipeline not available", "exception": str(e)}
+
+    gemini_copy = dict(gemini_response) if gemini_response else {}
+    analysis = gemini_copy.setdefault("analysis", {})
+    analysis["model_type"] = "Marketing ROI & Attribution Model"
+
+    try:
+        result = marketing_mmm_pipeline.analyze_file_and_run_pipeline(file_path, gemini_copy, models_dir=models_dir, **kwargs)
+        return {"success": True, "runner": "marketing_mmm_pipeline", "result": result}
+    except Exception as e:
+        logger.exception("Marketing MMM pipeline failed: %s", e)
+        return {"success": False, "error": "Marketing MMM pipeline failed", "exception": str(e)}
 
 
 def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], models_dir: str = "models", **kwargs) -> Dict[str, Any]:
@@ -419,9 +441,11 @@ def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], mod
 
         runners_out = {}
         for model_name in models:
-            # Dispatch to appropriate runner implementation
-            if model_name.strip().lower() == "sales, demand & financial forecasting model":
+            mkey = model_name.strip().lower()
+            if mkey == "sales, demand & financial forecasting model":
                 runners_out[model_name] = _call_sales_forecasting_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
+            elif mkey == "marketing roi & attribution model":
+                runners_out[model_name] = _call_marketing_mmm_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
             else:
                 # placeholder / not implemented: you can wire additional model runners here
                 logger.info("No runner implemented for model '%s' yet. Skipping.", model_name)
