@@ -415,6 +415,69 @@ def _call_marketing_mmm_runner(file_path: str, gemini_response: Dict[str, Any], 
         return {"success": False, "error": "Marketing MMM pipeline failed", "exception": str(e)}
 
 
+def _call_inventory_runner(
+    file_path: str,
+    gemini_response: Dict[str, Any],
+    models_dir: str = "models",
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    Trigger the Inventory & Replenishment Optimization pipeline.
+    Filters incompatible kwargs coming from generic dispatch.
+    """
+    try:
+        from services import inventory_optimization_pipeline
+    except Exception as e:
+        logger.exception("Failed to import inventory_optimization_pipeline: %s", e)
+        return {
+            "success": False,
+            "error": "inventory_optimization_pipeline not available",
+            "exception": str(e),
+        }
+
+    # Defensive copy
+    gemini_copy = dict(gemini_response) if gemini_response else {}
+    analysis = gemini_copy.setdefault("analysis", {})
+    analysis["model_type"] = "Inventory & Replenishment Optimization Model"
+
+    # ✅ Only allow kwargs supported by inventory pipeline
+    allowed_kwargs = {
+        "date_col_hint",
+        "holding_cost_rate",
+        "ordering_cost",
+        "stockout_cost",
+        "service_level",
+        "lead_time_days",
+        "review_period_days",
+        "models_dir",
+    }
+
+    filtered_kwargs = {
+        k: v for k, v in kwargs.items() if k in allowed_kwargs
+    }
+
+    try:
+        result = inventory_optimization_pipeline.analyze_file_and_run_pipeline(
+            file_path,
+            gemini_copy,
+            models_dir=models_dir,
+            **filtered_kwargs
+        )
+        return {
+            "success": True,
+            "runner": "inventory_optimization_pipeline",
+            "result": result,
+        }
+    except Exception as e:
+        logger.exception("Inventory optimization pipeline failed: %s", e)
+        return {
+            "success": False,
+            "error": "Inventory optimization pipeline failed",
+            "exception": str(e),
+        }
+
+
+
 def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], models_dir: str = "models", **kwargs) -> Dict[str, Any]:
     """
     Given a file and a Gemini analysis (from analyze_file_with_gemini),
@@ -446,6 +509,8 @@ def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], mod
                 runners_out[model_name] = _call_sales_forecasting_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
             elif mkey == "marketing roi & attribution model":
                 runners_out[model_name] = _call_marketing_mmm_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
+            elif mkey == "inventory & replenishment optimization model":
+                runners_out[model_name] = _call_inventory_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
             else:
                 # placeholder / not implemented: you can wire additional model runners here
                 logger.info("No runner implemented for model '%s' yet. Skipping.", model_name)
@@ -460,7 +525,6 @@ def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], mod
     except Exception as e:
         logger.exception("trigger_models_for_file failed")
         return {"success": False, "error": str(e)}
-
 
 def analyze_and_trigger(file_path: str, models_dir: str = "models", **kwargs) -> Dict[str, Any]:
     """
