@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 # STRICT: environment variable only
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyCxngolfSKcBnEDv69T1j3lm8hQt5YAtrE")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyCDj4GsrZn0sZ9fvvjmlAHbouYKWOAPSMI")
 
 if GEMINI_API_KEY:
     try:
@@ -50,7 +50,8 @@ enterprise_data_to_models = [
         "data_domain": "Inventory",
         "models": [
             "Sales, Demand & Financial Forecasting Model",
-            "Inventory & Replenishment Optimization Model"
+            "Inventory & Replenishment Optimization Model",
+            "Logistics & Supplier Risk Model"
         ]
     },
     {
@@ -478,6 +479,133 @@ def _call_inventory_runner(
 
 
 
+def _call_supplier_runner(
+    file_path: str,
+    gemini_response: Dict[str, Any],
+    models_dir: str = "models",
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    Trigger the Supplier Risk & Routing Optimization pipeline.
+    Filters incompatible kwargs coming from generic dispatch.
+    """
+    try:
+        from services import supplier_risk_and_routing_pipeline
+    except Exception as e:
+        logger.exception("Failed to import supplier_risk_and_routing_pipeline: %s", e)
+        return {
+            "success": False,
+            "error": "supplier_risk_and_routing_pipeline not available",
+            "exception": str(e),
+        }
+
+    # Defensive copy and force model_type so the pipeline runs in strict mode
+    gemini_copy = dict(gemini_response) if gemini_response else {}
+    analysis = gemini_copy.setdefault("analysis", {})
+    analysis["model_type"] = "Logistics & Supplier Risk Model"
+
+    # Allowed kwargs for supplier pipeline
+    allowed_kwargs = {
+        "supplier_col_hint",
+        "demand_col_hint",
+        "date_col_hint",
+        "default_unit_cost",
+        "default_capacity",
+        "default_lead_time",
+        "use_milp",
+        "risk_weight",
+        "vehicle_capacity",
+        "time_horizon_limit",
+        "milp_timeout_seconds",
+        "models_dir",
+    }
+
+    filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_kwargs}
+
+    try:
+        result = supplier_risk_and_routing_pipeline.analyze_file_and_run_pipeline(
+            file_path,
+            gemini_copy,
+            models_dir=models_dir,
+            **filtered_kwargs
+        )
+        return {
+            "success": True,
+            "runner": "supplier_risk_and_routing_pipeline",
+            "result": result,
+        }
+    except Exception as e:
+        logger.exception("Supplier risk & routing pipeline failed: %s", e)
+        return {
+            "success": False,
+            "error": "supplier_risk_and_routing_pipeline failed",
+            "exception": str(e),
+        }
+
+
+def _call_customer_segmentation_runner(
+    file_path: str,
+    gemini_response: Dict[str, Any],
+    models_dir: str = "models",
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    Trigger the Customer Segmentation & Modeling pipeline.
+    Filters incompatible kwargs coming from generic dispatch.
+    """
+    try:
+        from services import customer_segmentation_pipeline
+    except Exception as e:
+        logger.exception("Failed to import customer_segmentation_pipeline: %s", e)
+        return {
+            "success": False,
+            "error": "customer_segmentation_pipeline not available",
+            "exception": str(e),
+        }
+
+    # Defensive copy and force model_type so the pipeline runs in strict mode
+    gemini_copy = dict(gemini_response) if gemini_response else {}
+    analysis = gemini_copy.setdefault("analysis", {})
+    # Must match the strict model_type expected by the pipeline
+    analysis["model_type"] = "Customer Segmentation & Modeling"
+
+    # Allowed kwargs for customer segmentation pipeline (keep in sync with pipeline signature)
+    allowed_kwargs = {
+        "customer_col_hint",
+        "date_col_hint",
+        "monetary_col_hint",
+        "segmentation_methods",
+        "n_segments",
+        "run_predictive",
+        "predictive_method",
+        "churn_label_col_hint",
+        "models_dir",
+        "random_state",
+    }
+
+    filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_kwargs}
+
+    try:
+        result = customer_segmentation_pipeline.analyze_file_and_run_pipeline(
+            file_path,
+            gemini_copy,
+            models_dir=models_dir,
+            **filtered_kwargs
+        )
+        return {
+            "success": True,
+            "runner": "customer_segmentation_pipeline",
+            "result": result,
+        }
+    except Exception as e:
+        logger.exception("Customer segmentation pipeline failed: %s", e)
+        return {
+            "success": False,
+            "error": "customer_segmentation_pipeline failed",
+            "exception": str(e),
+        }
+
+
 def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], models_dir: str = "models", **kwargs) -> Dict[str, Any]:
     """
     Given a file and a Gemini analysis (from analyze_file_with_gemini),
@@ -511,6 +639,12 @@ def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], mod
                 runners_out[model_name] = _call_marketing_mmm_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
             elif mkey == "inventory & replenishment optimization model":
                 runners_out[model_name] = _call_inventory_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
+            elif mkey in ("supplier risk & routing optimization model", "logistics & supplier risk model"):
+                # Dispatch to the supplier risk & routing pipeline (supporting both canonical and legacy names)
+                runners_out[model_name] = _call_supplier_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
+            elif mkey in ("customer segmentation & modeling", "customer segmentation pipeline", "customer segmentation"):
+                # Dispatch to the customer segmentation pipeline (supports canonical and shorthand names)
+                runners_out[model_name] = _call_customer_segmentation_runner(file_path, gemini_response, models_dir=models_dir, **kwargs)
             else:
                 # placeholder / not implemented: you can wire additional model runners here
                 logger.info("No runner implemented for model '%s' yet. Skipping.", model_name)
@@ -525,6 +659,7 @@ def trigger_models_for_file(file_path: str, gemini_response: Dict[str, Any], mod
     except Exception as e:
         logger.exception("trigger_models_for_file failed")
         return {"success": False, "error": str(e)}
+
 
 def analyze_and_trigger(file_path: str, models_dir: str = "models", **kwargs) -> Dict[str, Any]:
     """
