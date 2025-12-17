@@ -1,5 +1,5 @@
 {
-  "created_at": "2025-12-17T06:17:18.149783Z",
+  "created_at": "2025-12-17T11:56:16.629989Z",
   "model": "Customer Segmentation & Modeling Pipeline",
   "segmentation_methods": [
     "kmeans",

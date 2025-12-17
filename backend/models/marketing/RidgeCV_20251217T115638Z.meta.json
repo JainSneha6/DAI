@@ -1,7 +1,7 @@
 {
   "model_name": "RidgeCV",
   "target_column": "Return on Ad Spend (ROAS)",
-  "created_at": "2025-12-17T06:44:56.622251Z",
+  "created_at": "2025-12-17T11:56:38.382022Z",
   "feature_names": [
     "_m_Budget",
     "_m_Actual Spend",
