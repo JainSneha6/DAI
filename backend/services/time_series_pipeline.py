@@ -686,6 +686,24 @@ def load_model_and_forecast(model_filepath: str, meta_filepath: str, steps: int 
     return result
 
 
+def get_latest_date(df: pd.DataFrame) -> datetime:
+    """
+    Fetch the latest date from the DataFrame's datetime index.
+    
+    Args:
+        df: DataFrame with a DatetimeIndex.
+    
+    Returns:
+        The maximum (latest) datetime in the index.
+    
+    Raises:
+        ValueError: If the index is empty or not a DatetimeIndex.
+    """
+    if df.empty or not isinstance(df.index, pd.DatetimeIndex):
+        raise ValueError("DataFrame must have a non-empty DatetimeIndex.")
+    return df.index.max()
+
+
 # -------------------------
 # Orchestration: full pipeline
 # -------------------------
@@ -787,6 +805,9 @@ def run_time_series_pipeline(
         raise ValueError("After preprocessing target is all NaN. Aborting in strict mode.")
 
     inferred_freq = pd.infer_freq(processed_df.index)
+
+    # Fetch the latest date from the full processed dataset
+    latest_date = get_latest_date(processed_df)
 
     train_df, test_df = train_test_split_time_series(processed_df, test_frac=test_frac)
     if len(train_df) < 5:
@@ -891,6 +912,7 @@ def run_time_series_pipeline(
         "inferred_freq": inferred_freq,
         "train_start": str(train_df.index.min()),
         "train_end": str(train_df.index.max()),
+        "data_end": str(latest_date),  # Latest date from full processed dataset
         "created_at": datetime.utcnow().isoformat() + "Z"
     }
 
