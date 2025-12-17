@@ -58,7 +58,7 @@ def get_vector_store():
             return None
 
         cyborg_index_name = current_app.config.get(
-            "CYBORG_INDEX_NAME", "embedded_index_v12"
+            "CYBORG_INDEX_NAME", "embedded_index_v15"
         )
 
         models_dir = current_app.config.get(
