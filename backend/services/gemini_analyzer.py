@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 # STRICT: environment variable only
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDCXC17LulCwR9JYj6Cjtr7OYTxQ2oZdhg")
+GEMINI_API_KEY = "AIzaSyDFQjtwbWaxVRhEIHZVqiRByg4GS9gW0z0"
 
 if GEMINI_API_KEY:
     try:

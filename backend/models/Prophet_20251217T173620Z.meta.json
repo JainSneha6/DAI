@@ -1,0 +1,27 @@
+{
+  "model_name": "Prophet",
+  "target_column": "Total Sales",
+  "datetime_column": "Date",
+  "exogenous_features": [
+    "Order ID",
+    "Quantity Sold",
+    "Unit Price",
+    "Customer ID"
+  ],
+  "inferred_freq": "D",
+  "train_start": "2023-01-21 00:00:00",
+  "train_end": "2023-04-10 00:00:00",
+  "data_end": "2023-04-30 00:00:00",
+  "created_at": "2025-12-17T17:36:20.092765Z",
+  "gemini_model_targets": {
+    "Sales, Demand & Financial Forecasting Model": "Total Sales",
+    "Pricing & Revenue Optimization Model": "Total Sales",
+    "Sentiment & Intent NLP Model": null
+  },
+  "last_exog_values": [
+    1.0836279306897783,
+    1.0797922509357833,
+    -0.23966003890135218,
+    -0.23423406566500424
+  ]
+}
