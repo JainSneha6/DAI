@@ -8,6 +8,7 @@ import ChatWithData from "./pages/ChatWithData";
 import FileAnalysisPage from "./pages/FileAnalysisPage";
 import ModelsOverviewPage from "./pages/ModelsOverviewPage";
 import TimeSeriesChat from "./pages/TimeSeries";
+import MarketingChat from "./pages/MarketingChat";
 
 function App() {
   return (
@@ -76,6 +77,12 @@ function App() {
         <Route path="/sales-forecasting" element={
           <Layout>
             <TimeSeriesChat />
+          </Layout>
+        } />
+
+        <Route path="/marketing-roi" element={
+          <Layout>
+            <MarketingChat />
           </Layout>
         } />
 
