@@ -1,20 +1,68 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HomePage from './pages/Homepage';
-import Input from './pages/Input';
-import TimeSeries from './pages/TimeSeries';
-import Dashboard from './pages/Dashboard';
-import Chatbot from './pages/ChatWithData';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Layout from "./components/Layout";
+import Homepage from "./pages/Homepage";
+import UploadPage from "./pages/Input";
+import Dashboard from "./pages/Dashboard";
+import ChatWithData from "./pages/ChatWithData";
+import FileAnalysisPage from "./pages/FileAnalysisPage";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path='/input' element = {<Input />} />
-        <Route path="/dashboard" element = {<Dashboard/>} />
-        <Route path="/chat" element = {<Chatbot/>} />
-        <Route path="/time-series" element = {<TimeSeries/>} />
+        {/* Homepage - No sidebar (landing page) */}
+        <Route
+          path="/"
+          element={
+            <Layout showSidebar={false}>
+              <Homepage />
+            </Layout>
+          }
+        />
+
+        {/* Upload Page - With sidebar */}
+        <Route
+          path="/upload"
+          element={
+            <Layout>
+              <UploadPage />
+            </Layout>
+          }
+        />
+
+        {/* Dashboard - With sidebar */}
+        <Route
+          path="/dashboard"
+          element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          }
+        />
+
+        {/* Chat/Analysis - With sidebar */}
+        <Route
+          path="/chat"
+          element={
+            <Layout>
+              <ChatWithData />
+            </Layout>
+          }
+        />
+
+        {/* File Analysis Page - With sidebar */}
+        <Route
+          path="/analysis/:filename"
+          element={
+            <Layout>
+              <FileAnalysisPage />
+            </Layout>
+          }
+        />
+
+        {/* Redirect unknown routes to homepage */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
