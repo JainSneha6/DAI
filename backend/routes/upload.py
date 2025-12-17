@@ -31,6 +31,52 @@ def allowed_file(filename):
     return filename and "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _sanitize_for_json(obj):
+    """Recursively sanitize objects for JSON serialization, handling NaN, inf, and other non-JSON types."""
+    if obj is None:
+        return None
+    if isinstance(obj, bool):  # Check bool before int (bool is subclass of int)
+        return obj
+    if isinstance(obj, (int, str)):
+        return obj
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    if isinstance(obj, dict):
+        return {str(k): _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_for_json(v) for v in obj]
+    if isinstance(obj, set):
+        return [_sanitize_for_json(v) for v in obj]
+    # Handle pandas/numpy types
+    if hasattr(obj, 'item'):  # numpy scalar
+        try:
+            return _sanitize_for_json(obj.item())
+        except:
+            pass
+    if hasattr(obj, 'tolist'):  # numpy array
+        try:
+            return _sanitize_for_json(obj.tolist())
+        except:
+            pass
+    # Try to serialize, fallback to string
+    try:
+        json.dumps(obj)
+        return obj
+    except (TypeError, ValueError):
+        return str(obj)
+
+
+def _persist_meta(meta_dir: str, filename: str, meta_obj: dict):
+    """Persist metadata to disk, sanitizing it first to avoid NaN issues."""
+    os.makedirs(meta_dir, exist_ok=True)
+    path = os.path.join(meta_dir, f"{filename}.meta.json")
+    safe = _sanitize_for_json(meta_obj)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(safe, fh, ensure_ascii=False, indent=2)
+
+
 @bp.route("/api/upload", methods=["POST"])
 def upload_files():
     """Receives uploaded CSV files, runs analysis + pipeline, stores artifacts and optionally embeds
@@ -62,7 +108,7 @@ def upload_files():
     cyborg_index_storage = current_app.config.get("CYBORG_INDEX_STORAGE", "postgres")
     cyborg_config_storage = current_app.config.get("CYBORG_CONFIG_STORAGE", "postgres")
     cyborg_items_storage = current_app.config.get("CYBORG_ITEMS_STORAGE", "postgres")
-    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v12")
+    cyborg_index_name = current_app.config.get("CYBORG_INDEX_NAME", "embedded_index_v15")
     embedding_model = (
         current_app.config.get("CYBORG_EMBEDDING_MODEL")
         or os.environ.get("CYBORG_EMBEDDING_MODEL")
@@ -232,6 +278,7 @@ def upload_files():
         if not csv_upsert_success:
             results.append({"filename": filename, "success": False, "error": "CSV embedding failed"})
             continue  
+        
         try:
             summary = summarize_csv(save_path)
             category = combine_classification(gemini_response, summary.get("columns", []))
@@ -314,7 +361,6 @@ def upload_files():
                                 coerced = _pd.to_numeric(sample_df[kc], errors="coerce")
                                 if coerced.notna().sum() > 0:
                                     target_col_hint = kc
-
                                     break
                     except Exception:
                         logger.exception("Failed to sample CSV to validate key_columns for %s", filename)
@@ -436,7 +482,6 @@ def upload_files():
         except Exception as e:
             logger.exception("Failed to upsert pipeline items for file %s: %s", filename, e)
 
-
         results.append({
             "filename": filename,
             "analysis": gemini_response,
@@ -444,7 +489,8 @@ def upload_files():
             "artifacts": artifact_urls,
         })
 
-    return jsonify({"success": True, "files": results})
+    # Sanitize entire response before returning
+    return jsonify(_sanitize_for_json({"success": True, "files": results}))
 
 
 @bp.route("/api/models", methods=["GET"])
@@ -490,7 +536,9 @@ def list_saved_models():
             return ""
 
     items.sort(key=_created_key, reverse=True)
-    return jsonify({"success": True, "models": items})
+    
+    # Sanitize before returning
+    return jsonify(_sanitize_for_json({"success": True, "models": items}))
 
 
 @bp.route("/models/<path:filename>", methods=["GET"])
@@ -500,34 +548,9 @@ def serve_model(filename):
     return send_from_directory(models_dir, filename, as_attachment=True)
 
 
-def _sanitize_for_json(obj):
-    if obj is None:
-        return None
-    if isinstance(obj, (str, int, bool)):
-        return obj
-    if isinstance(obj, float):
-        return None if math.isnan(obj) or math.isinf(obj) else obj
-    if isinstance(obj, dict):
-        return {str(k): _sanitize_for_json(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple, set)):
-        return [_sanitize_for_json(v) for v in obj]
-    try:
-        json.dumps(obj)
-        return obj
-    except Exception:
-        return str(obj)
-
-
-def _persist_meta(meta_dir: str, filename: str, meta_obj: dict):
-    os.makedirs(meta_dir, exist_ok=True)
-    path = os.path.join(meta_dir, f"{filename}.meta.json")
-    safe = _sanitize_for_json(meta_obj)
-    with open(path, "w", encoding="utf-8") as fh:
-        json.dump(safe, fh, ensure_ascii=False, indent=2)
-
-
 @bp.route("/api/files", methods=["GET"])
 def list_uploaded_files():
+    """List uploaded files with their metadata."""
     upload_folder = current_app.config.get(
         "UPLOAD_FOLDER", os.path.join(os.getcwd(), "uploads")
     )
@@ -549,8 +572,6 @@ def list_uploaded_files():
                 logger.exception("Failed to read meta file %s", path)
                 continue
 
-            meta = _sanitize_for_json(meta)
-
             # ---- ENSURE CATEGORY STRING ----
             if not meta.get("category"):
                 base_filename = fname.replace(".meta.json", "")
@@ -565,10 +586,11 @@ def list_uploaded_files():
                             row_count = analysis.get("row_count") or 0
 
                             meta["category"] = domain
-                            meta["classification"] = _sanitize_for_json(analysis)
+                            meta["classification"] = analysis
                             meta["row_count"] = row_count
                             meta.setdefault("uploaded_at", datetime.utcnow().isoformat() + "Z")
 
+                            # Persist with sanitization
                             _persist_meta(meta_dir, base_filename, meta)
                         else:
                             meta["category"] = "Unknown"
@@ -577,11 +599,18 @@ def list_uploaded_files():
                         meta["category"] = "Unknown"
                 else:
                     meta["category"] = "Unknown"
-                
+            
+            # Sanitize the entire meta object before adding to items
             items.append(_sanitize_for_json(meta))
 
         items.sort(key=lambda i: i.get("uploaded_at", ""), reverse=True)
-        return jsonify({"success": True, "files": items})
+        
+        logger.info("Returning %d files", len(items))
+        if items:
+            logger.debug("Sample item: %s", items[0])
+        
+        # Final sanitization of the entire response
+        return jsonify(_sanitize_for_json({"success": True, "files": items}))
 
     except Exception as e:
         logger.exception("Failed to list uploaded files")
