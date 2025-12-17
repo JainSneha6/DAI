@@ -6,6 +6,8 @@ import UploadPage from "./pages/Input";
 import Dashboard from "./pages/Dashboard";
 import ChatWithData from "./pages/ChatWithData";
 import FileAnalysisPage from "./pages/FileAnalysisPage";
+import ModelsOverviewPage from "./pages/ModelsOverviewPage";
+import ModelDetailsPage from "./pages/ModelDetailsPage";
 
 function App() {
   return (
@@ -37,6 +39,26 @@ function App() {
           element={
             <Layout>
               <Dashboard />
+            </Layout>
+          }
+        />
+
+        {/* Models Overview - With sidebar */}
+        <Route
+          path="/models"
+          element={
+            <Layout>
+              <ModelsOverviewPage />
+            </Layout>
+          }
+        />
+
+        {/* Model Details - With sidebar */}
+        <Route
+          path="/models/:modelId"
+          element={
+            <Layout>
+              <ModelDetailsPage />
             </Layout>
           }
         />

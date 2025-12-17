@@ -38,6 +38,12 @@ export default function Sidebar() {
             description: "View your files"
         },
         {
+            path: "/models",
+            icon: Brain,
+            label: "Models",
+            description: "Browse AI models"
+        },
+        {
             path: "/chat",
             icon: MessageSquare,
             label: "Chat",
