@@ -210,7 +210,7 @@ export default function ModelsOverviewPage() {
                                     model={model}
                                     Icon={Icon}
                                     index={index}
-                                    onClick={() => navigate(`/models/${model.id}`)}
+                                    onClick={() => navigate(`/${model.id}`)}
                                 />
                             );
                         })}

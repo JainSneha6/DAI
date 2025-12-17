@@ -7,7 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import ChatWithData from "./pages/ChatWithData";
 import FileAnalysisPage from "./pages/FileAnalysisPage";
 import ModelsOverviewPage from "./pages/ModelsOverviewPage";
-import ModelDetailsPage from "./pages/ModelDetailsPage";
+import TimeSeriesChat from "./pages/TimeSeries";
 
 function App() {
   return (
@@ -53,16 +53,6 @@ function App() {
           }
         />
 
-        {/* Model Details - With sidebar */}
-        <Route
-          path="/models/:modelId"
-          element={
-            <Layout>
-              <ModelDetailsPage />
-            </Layout>
-          }
-        />
-
         {/* Chat/Analysis - With sidebar */}
         <Route
           path="/chat"
@@ -82,6 +72,12 @@ function App() {
             </Layout>
           }
         />
+
+        <Route path="/sales-forecasting" element={
+          <Layout>
+            <TimeSeriesChat />
+          </Layout>
+        } />
 
         {/* Redirect unknown routes to homepage */}
         <Route path="*" element={<Navigate to="/" replace />} />
