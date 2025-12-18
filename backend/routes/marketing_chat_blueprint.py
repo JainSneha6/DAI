@@ -891,7 +891,7 @@ class ResponseFormatter:
 # INIT GEMINI CLIENT
 # -------------------------------------------------------------------
 def init_gemini():
-    api_key = "AIzaSyDFQjtwbWaxVRhEIHZVqiRByg4GS9gW0z0"
+    api_key = "AIzaSyB_cMKuBZPux9FttkqZSFEsDJjcUlyukqY"
     if not api_key:
         logger.error("Missing GEMINI_API_KEY")
         return None
@@ -918,7 +918,7 @@ def get_vector_store():
             logger.error("Missing CYBORG_API_KEY")
             return None
 
-        cyborg_index_name = current_app.config.get('CYBORG_INDEX_NAME', 'embedded_index_v15')
+        cyborg_index_name = current_app.config.get('CYBORG_INDEX_NAME', 'embedded_index_v16')
         models_dir = current_app.config.get('MODELS_FOLDER', os.path.join(os.getcwd(), 'models'))
         keys_folder = os.path.join(models_dir, 'cyborg_indexes')
         key_path = os.path.join(keys_folder, f"{cyborg_index_name}.key")

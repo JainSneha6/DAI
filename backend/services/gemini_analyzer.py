@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 # STRICT: environment variable only
-GEMINI_API_KEY = "AIzaSyDFQjtwbWaxVRhEIHZVqiRByg4GS9gW0z0"
+GEMINI_API_KEY = "AIzaSyB_cMKuBZPux9FttkqZSFEsDJjcUlyukqY"
 
 if GEMINI_API_KEY:
     try:
@@ -49,9 +49,7 @@ enterprise_data_to_models = [
     {
         "data_domain": "Inventory",
         "models": [
-            "Sales, Demand & Financial Forecasting Model",
             "Inventory & Replenishment Optimization Model",
-            "Logistics & Supplier Risk Model"
         ]
     },
     {
@@ -87,14 +85,6 @@ enterprise_data_to_models = [
     {
         "data_domain": "Logistics",
         "models": [
-            "Logistics & Supplier Risk Model"
-        ]
-    },
-    {
-        "data_domain": "Supply Chain",
-        "models": [
-            "Sales, Demand & Financial Forecasting Model",
-            "Inventory & Replenishment Optimization Model",
             "Logistics & Supplier Risk Model"
         ]
     },

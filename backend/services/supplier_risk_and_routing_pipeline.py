@@ -6,6 +6,12 @@
 # - Aggregates demand, uses supplier capacities, costs, lead times, locations.
 # - Persists chosen plan/artifact and metadata, returns ONLY JSON-serializable results.
 #
+# Improvements:
+# - If demand_col detected but all values zero/NaN, fallback to unit demands (d_i=1.0).
+# - Default capacity per supplier at least 1.0 to allow full unit assignments.
+# - Enhanced logging for debugging.
+# - Fixed date filtering to handle invalid dates better.
+#
 # Usage:
 #   from services.supplier_risk_and_routing_pipeline import analyze_file_and_run_pipeline
 #   analyze_file_and_run_pipeline(csv_path, gemini_response, models_dir="models")
@@ -30,7 +36,6 @@ logger.addHandler(logging.NullHandler())
 # Optional dependencies
 try:
     import pulp as pl
-
     _HAS_PULP = True
 except Exception:
     _HAS_PULP = False
@@ -79,9 +84,11 @@ def save_metadata(metadata: Dict, model_filepath: str, models_dir: str = "models
 # ---- detection heuristics ----
 
 COMMON_DATE_KEYWORDS = ["date", "datetime", "ds", "timestamp", "time"]
-_SUPPLIER_KEYWORDS = ["supplier", "vendor", "vendor_id", "supplier_id", "vendor_code", "vendor_name"]
+_SUPPLIER_KEYWORDS = ["supplier", "vendor", "vendor_id", "supplier_id", "vendor_code", "vendor_name",
+                      "carrier", "carrier_id", "carrier_code", "carrier_name", "hauler"]
 _CUSTOMER_KEYWORDS = ["customer", "cust", "order_id", "order", "shipment", "consignment"]
-_DEMAND_KEYWORDS = ["demand", "quantity", "qty", "units", "order_qty", "demand_qty", "quantity_ordered"]
+_DEMAND_KEYWORDS = ["demand", "quantity", "qty", "units", "order_qty", "demand_qty", "quantity_ordered",
+                    "shipment_qty", "volume", "weight"]
 _LEADTIME_KEYWORDS = ["lead_time", "leadtime", "lt", "lead-time"]
 _CAPACITY_KEYWORDS = ["capacity", "max_capacity", "cap"]
 _COST_KEYWORDS = ["cost", "unit_cost", "price", "shipping_cost", "order_cost", "fixed_order_cost"]
@@ -195,7 +202,7 @@ def _to_float_safe(val: Any, default: float = 0.0) -> float:
 # ---- scoring helpers (statistical heuristics) ----
 
 
-def compute_basic_supplier_stats(df: pd.DataFrame, supplier_col: str, demand_col: str, lead_time_col: Optional[str], ontime_col: Optional[str], defect_col: Optional[str]) -> Dict[str, Dict[str, float]]:
+def compute_basic_supplier_stats(df: pd.DataFrame, supplier_col: str, demand_col: Optional[str], lead_time_col: Optional[str], ontime_col: Optional[str], defect_col: Optional[str]) -> Dict[str, Dict[str, float]]:
     """
     Compute per-supplier basic stats:
      - total_supply (sum of demand)
@@ -207,7 +214,7 @@ def compute_basic_supplier_stats(df: pd.DataFrame, supplier_col: str, demand_col
     stats: Dict[str, Dict[str, float]] = {}
     for s in suppliers:
         sub = df[df[supplier_col] == s]
-        total = float(pd.to_numeric(sub[demand_col], errors="coerce").sum()) if demand_col in sub.columns else float(len(sub))
+        total = float(pd.to_numeric(sub[demand_col], errors="coerce").sum()) if demand_col and demand_col in sub.columns else float(len(sub))
         # lead time metrics
         if lead_time_col and lead_time_col in sub.columns:
             lt_vals = pd.to_numeric(sub[lead_time_col], errors="coerce").dropna()
@@ -219,7 +226,7 @@ def compute_basic_supplier_stats(df: pd.DataFrame, supplier_col: str, demand_col
         # on-time
         if ontime_col and ontime_col in sub.columns:
             ontime_vals = pd.to_numeric(sub[ontime_col], errors="coerce").dropna()
-            ontime_rate = float((on_time := (ontime_vals == 1)).sum() / len(ontime_vals)) if len(ontime_vals) > 0 else float(np.nan)
+            ontime_rate = float((ontime_vals == 1).sum() / len(ontime_vals)) if len(ontime_vals) > 0 else float(np.nan)
         else:
             ontime_rate = float(np.nan)
         # defect
@@ -285,7 +292,7 @@ def compute_statistical_risk_scores(stats: Dict[str, Dict[str, float]]) -> Dict[
 # ---- optional ML-based scorer (logistic regression) ----
 
 
-def train_ml_risk_model(df: pd.DataFrame, supplier_col: str, demand_col: str, lead_time_col: Optional[str], ontime_col: Optional[str], defect_col: Optional[str], random_state: int = 42) -> Tuple[Optional[Any], Optional[Dict[str, float]]]:
+def train_ml_risk_model(df: pd.DataFrame, supplier_col: str, demand_col: Optional[str], lead_time_col: Optional[str], ontime_col: Optional[str], defect_col: Optional[str], random_state: int = 42) -> Tuple[Optional[Any], Optional[Dict[str, float]]]:
     """
     Train a simple logistic regression to predict 'bad' deliveries.
     - labels derived from ontime/defect (if available). If neither available -> returns None.
@@ -306,7 +313,7 @@ def train_ml_risk_model(df: pd.DataFrame, supplier_col: str, demand_col: str, le
         return None, None
 
     feats = pd.DataFrame(index=df_copy.index)
-    if demand_col in df_copy.columns:
+    if demand_col and demand_col in df_copy.columns:
         feats["demand"] = pd.to_numeric(df_copy[demand_col], errors="coerce").fillna(0.0)
     else:
         feats["demand"] = 1.0
@@ -315,6 +322,8 @@ def train_ml_risk_model(df: pd.DataFrame, supplier_col: str, demand_col: str, le
         feats["lead_time"] = pd.to_numeric(df_copy[lead_time_col], errors="coerce").fillna(feats["demand"].median() if "demand" in feats else 0.0)
     else:
         feats["lead_time"] = feats["demand"] * 0.0 + np.nan
+
+    feats["supplier_code"] = pd.Categorical(df_copy[supplier_col]).codes
 
     feats = feats.fillna(feats.median().fillna(0.0))
 
@@ -456,7 +465,7 @@ def solve_supplier_allocation_mip(
     supplier_capacity: Dict[str, float],
     supplier_unit_cost: Dict[str, float],
     supplier_risk_score: Dict[str, float],
-    demand_col: str,
+    demand_col: Optional[str],
     supplier_col: str,
     customer_col: Optional[str] = None,
     max_assign_per_customer: Optional[int] = None,
@@ -487,7 +496,7 @@ def solve_supplier_allocation_mip(
     # objective using safe numeric conversion
     obj_terms = []
     for i in range(N):
-        d_i = _to_float_safe(demand_df.loc[i, demand_col], default=0.0)
+        d_i = 1.0 if demand_col is None else _to_float_safe(demand_df.loc[i, demand_col], default=0.0)
         for s in S:
             unit = float(supplier_unit_cost.get(s, 0.0))
             risk = float(supplier_risk_score.get(s, 0.0))
@@ -496,8 +505,9 @@ def solve_supplier_allocation_mip(
 
     # constraints: satisfy demand for each row
     for i in range(N):
-        d_i = _to_float_safe(demand_df.loc[i, demand_col], default=0.0)
-        prob += pl.lpSum([x[i][s] for s in S]) == d_i
+        d_i = 1.0 if demand_col is None else _to_float_safe(demand_df.loc[i, demand_col], default=0.0)
+        if d_i > 0:  # Skip zero demands
+            prob += pl.lpSum([x[i][s] for s in S]) == d_i
 
     # capacity constraints
     for s in S:
@@ -507,7 +517,7 @@ def solve_supplier_allocation_mip(
     # solve
     solver = pl.PULP_CBC_CMD(msg=False, timeLimit=timeout)
     status = prob.solve(solver)
-    status_str = pl.LpStatus.get(status, "Unknown")
+    status_str = pl.LpStatus[status]
     logger.info("Supplier allocation MILP status: %s", status_str)
 
     allocation: Dict[str, Dict[int, float]] = {s: {} for s in S}
@@ -532,7 +542,7 @@ def heuristic_supplier_allocator(
     supplier_capacity: Dict[str, float],
     supplier_unit_cost: Dict[str, float],
     supplier_risk_score: Dict[str, float],
-    demand_col: str,
+    demand_col: Optional[str],
 ) -> Dict[str, Any]:
     """
     Greedy assign each demand row to the supplier with minimal (unit_cost + risk_score) that has remaining capacity.
@@ -543,7 +553,9 @@ def heuristic_supplier_allocator(
     remaining_cap = {s: float(supplier_capacity.get(s, float("inf"))) for s in supplier_list}
     score = {s: float(supplier_unit_cost.get(s, 0.0)) + float(supplier_risk_score.get(s, 0.0)) for s in supplier_list}
     for i in range(demand_df.shape[0]):
-        d_i = _to_float_safe(demand_df.iloc[i][demand_col], default=0.0)
+        d_i = 1.0 if demand_col is None else _to_float_safe(demand_df.iloc[i][demand_col], default=0.0)
+        if d_i <= 0:
+            continue  # Skip zero demands
         ordered = sorted(supplier_list, key=lambda s: score[s])
         assigned = False
         for s in ordered:
@@ -560,9 +572,10 @@ def heuristic_supplier_allocator(
                 for s, cap in pos_caps.items():
                     frac = cap / total_pos if total_pos > 0 else 0
                     q = d_i * frac
-                    allocation[s].setdefault(int(i), 0.0)
-                    allocation[s][int(i)] += q
-                    remaining_cap[s] -= q
+                    if q > 1e-8:
+                        allocation[s].setdefault(int(i), 0.0)
+                        allocation[s][int(i)] += q
+                        remaining_cap[s] -= q
             else:
                 s0 = ordered[0]
                 allocation[s0].setdefault(int(i), 0.0)
@@ -595,9 +608,11 @@ def simple_vrp_routes(
 ) -> Dict[str, List[List[int]]]:
     """
     For each supplier, build routes (list of customer row indices) using a capacity-constrained nearest neighbor heuristic.
+    If no location data, create single-customer routes.
     Returns routes per supplier: {supplier: [ [row_idx, ...], [...], ... ]}
     """
     lat_col, lon_col = customer_loc_cols if isinstance(customer_loc_cols, (list, tuple)) else (None, None)
+    has_locations = lat_col is not None and lon_col is not None and lat_col in demand_df.columns and lon_col in demand_df.columns
     routes_per_supplier: Dict[str, List[List[int]]] = {}
 
     for s, alloc in allocation.items():
@@ -606,11 +621,16 @@ def simple_vrp_routes(
             routes_per_supplier[s] = []
             continue
 
+        if not has_locations:
+            # No locations: single routes per customer
+            routes_per_supplier[s] = [[int(r)] for r in sorted(rows)]
+            continue
+
         nodes = []
         for r in rows:
             try:
-                lat = float(demand_df.loc[r, lat_col]) if lat_col and lat_col in demand_df.columns else 0.0
-                lon = float(demand_df.loc[r, lon_col]) if lon_col and lon_col in demand_df.columns else 0.0
+                lat = float(demand_df.loc[r, lat_col])
+                lon = float(demand_df.loc[r, lon_col])
             except Exception:
                 lat, lon = (0.0, 0.0)
             q = float(alloc.get(r, 0.0))
@@ -737,19 +757,26 @@ def run_supplier_risk_and_routing_pipeline(
     defect_col = detect_defect_column(columns)
     customer_col = detect_customer_column(columns)
 
-    if not supplier_col or not demand_col:
-        raise ValueError("Could not detect supplier column or demand column. Provide hints or ensure file has supplier and demand columns.")
+    if not supplier_col:
+        raise ValueError("Could not detect supplier column. Provide hints or ensure file has supplier/carrier columns.")
+
+    # Check if demand_col is useful
+    if demand_col:
+        numeric_demands = pd.to_numeric(df[demand_col], errors='coerce').dropna()
+        if len(numeric_demands) == 0 or numeric_demands.sum() == 0:
+            logger.info("Demand column detected but all zero/NaN, treating as unit demands (no demand_col)")
+            demand_col = None
 
     suppliers = df[supplier_col].unique().tolist()
+    logger.info(f"Detected {len(suppliers)} unique suppliers")
 
+    # Set historical attributes from full df
     supplier_unit_cost: Dict[str, float] = {}
-    supplier_capacity: Dict[str, float] = {}
     supplier_lead_time: Dict[str, int] = {}
     supplier_locations: Dict[str, Tuple[float, float]] = {}
 
     for s in suppliers:
         supplier_unit_cost[s] = float(df.loc[df[supplier_col] == s, cost_col].dropna().iloc[0]) if cost_col and not df.loc[df[supplier_col] == s, cost_col].dropna().empty else float(default_unit_cost)
-        supplier_capacity[s] = float(df.loc[df[supplier_col] == s, capacity_col].dropna().iloc[0]) if capacity_col and not df.loc[df[supplier_col] == s, capacity_col].dropna().empty else float(default_capacity)
         lt_val = int(df.loc[df[supplier_col] == s, lead_time_col].dropna().iloc[0]) if lead_time_col and not df.loc[df[supplier_col] == s, lead_time_col].dropna().empty else int(default_lead_time)
         supplier_lead_time[s] = max(0, lt_val)
         try:
@@ -758,6 +785,52 @@ def run_supplier_risk_and_routing_pipeline(
         except Exception:
             lat, lon = 0.0, 0.0
         supplier_locations[s] = (lat, lon)
+
+    # Filter demand_df for "next" demands: most recent
+    demand_df = df.copy()
+    original_len = len(demand_df)
+    if time_horizon_limit:
+        if date_col and date_col in demand_df.columns:
+            try:
+                demand_df[date_col] = pd.to_datetime(demand_df[date_col], errors="coerce")
+                valid_dates = demand_df.dropna(subset=[date_col])
+                if not valid_dates.empty:
+                    demand_df = valid_dates.sort_values(date_col).tail(time_horizon_limit)
+                else:
+                    logger.warning("No valid dates, falling back to tail")
+                    demand_df = demand_df.tail(time_horizon_limit)
+                logger.info(f"Filtered to {len(demand_df)} recent rows using date column '{date_col}'")
+            except Exception as e:
+                logger.warning(f"Date filtering failed: {e}, falling back to tail({time_horizon_limit})")
+                demand_df = demand_df.tail(time_horizon_limit)
+        else:
+            demand_df = demand_df.tail(time_horizon_limit)
+            logger.info(f"Filtered to {len(demand_df)} recent rows (no date column)")
+    else:
+        logger.info(f"No time horizon limit, using all {len(demand_df)} rows")
+
+    if len(demand_df) == 0:
+        logger.warning(f"Demand DF empty after filtering (original: {original_len}). Falling back to full DF.")
+        demand_df = df.copy()
+
+    # Compute total future demand for default capacity
+    total_demand = 0.0
+    for i in range(len(demand_df)):
+        d_i = 1.0 if demand_col is None else _to_float_safe(demand_df.iloc[i][demand_col], default=0.0)
+        total_demand += d_i
+    default_cap = max(1.0, total_demand / len(suppliers)) if suppliers else 1.0  # Ensure at least 1 unit per supplier
+    logger.info(f"Total demand for allocation: {total_demand}, default cap per supplier: {default_cap}")
+
+    # Set capacities (historical if available, else balanced default)
+    supplier_capacity: Dict[str, float] = {}
+    for s in suppliers:
+        if capacity_col and not df.loc[df[supplier_col] == s, capacity_col].dropna().empty:
+            cap_val = float(df.loc[df[supplier_col] == s, capacity_col].dropna().iloc[0])
+            supplier_capacity[s] = max(1.0, cap_val)  # Ensure min 1
+            logger.info(f"Using historical capacity for {s}: {cap_val}")
+        else:
+            supplier_capacity[s] = default_cap
+            logger.info(f"Using default capacity for {s}: {default_cap}")
 
     stats = compute_basic_supplier_stats(df, supplier_col, demand_col, lead_time_col, ontime_col, defect_col)
     stat_risk = compute_statistical_risk_scores(stats)
@@ -778,18 +851,6 @@ def run_supplier_risk_and_routing_pipeline(
             parts.append(surv_scores.get(s, 0.5))
         combined = float(np.nanmean(parts))
         combined_risk[s] = float(max(0.0, min(1.0, combined)))
-
-    demand_df = df.copy()
-    if time_horizon_limit and date_col and date_col in demand_df.columns:
-        try:
-            demand_df[date_col] = pd.to_datetime(demand_df[date_col], errors="coerce")
-            unique_sorted = sorted(demand_df[date_col].dropna().unique())
-            cutoff = unique_sorted[:time_horizon_limit]
-            demand_df = demand_df[demand_df[date_col].isin(cutoff)]
-        except Exception:
-            pass
-    if time_horizon_limit and not date_col:
-        demand_df = demand_df.head(time_horizon_limit)
 
     allocation_result = None
     solver_used = None
@@ -814,13 +875,14 @@ def run_supplier_risk_and_routing_pipeline(
             solver_used = "MILP_pulp"
             solver_status = allocation_result.get("status")
             allocation = allocation_result.get("allocation")
+            logger.info(f"MILP allocation: {sum(len(v) for v in allocation.values())} assignments")
         except Exception as e:
             logger.exception("MILP failed, falling back to heuristic: %s", e)
             allocation_result = None
             solver_used = "MILP_failed_fallback_heuristic"
             solver_status = str(e)
 
-    if allocation_result is None:
+    if allocation_result is None or not allocation:
         heuristic_alloc = heuristic_supplier_allocator(
             demand_df=demand_df,
             supplier_list=suppliers,
@@ -832,6 +894,7 @@ def run_supplier_risk_and_routing_pipeline(
         allocation = heuristic_alloc.get("allocation")
         solver_status = heuristic_alloc.get("status")
         solver_used = "heuristic_allocator"
+        logger.info(f"Heuristic allocation: {sum(len(v) for v in allocation.values())} assignments")
 
     # compute VRP routes per supplier if lat/lon for customers exist
     if lat_col and lon_col and lat_col in demand_df.columns and lon_col in demand_df.columns:
@@ -841,7 +904,9 @@ def run_supplier_risk_and_routing_pipeline(
 
     try:
         routes = simple_vrp_routes(allocation, demand_df, customer_loc_cols, supplier_locations, vehicle_capacity=vehicle_capacity)
-    except Exception:
+        logger.info(f"Generated routes for {sum(len(r) for r in routes.values())} vehicles")
+    except Exception as e:
+        logger.exception("VRP failed: %s", e)
         routes = {s: [] for s in suppliers}
 
     results: Dict[str, Any] = {
