@@ -44,7 +44,7 @@ const MODELS = [
         description: "Optimize inventory levels, reorder points, and replenishment strategies to minimize costs."
     },
     {
-        id: "supplier-risk",
+        id: "logistics-optimization",
         name: "Logistics & Supplier Risk",
         icon: Truck,
         color: "amber",

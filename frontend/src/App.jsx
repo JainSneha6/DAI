@@ -9,6 +9,8 @@ import FileAnalysisPage from "./pages/FileAnalysisPage";
 import ModelsOverviewPage from "./pages/ModelsOverviewPage";
 import TimeSeriesChat from "./pages/TimeSeries";
 import MarketingChat from "./pages/MarketingChat";
+import InventoryChat from "./pages/Inventory";
+import LogisticsChat from "./pages/Logistics";
 
 function App() {
   return (
@@ -83,6 +85,18 @@ function App() {
         <Route path="/marketing-roi" element={
           <Layout>
             <MarketingChat />
+          </Layout>
+        } />
+
+        <Route path="/inventory-optimization" element={
+          <Layout>
+            <InventoryChat />
+          </Layout>
+        } />
+
+        <Route path="/logistics-optimization" element={
+          <Layout>
+            <LogisticsChat />
           </Layout>
         } />
 
