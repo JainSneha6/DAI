@@ -12,6 +12,7 @@ import MarketingChat from "./pages/MarketingChat";
 import InventoryChat from "./pages/Inventory";
 import LogisticsChat from "./pages/Logistics";
 import CustomerChat from "./pages/Customer";
+import ScenarioSimulator from "./pages/ScenarioSimulator";
 
 function App() {
   return (
@@ -104,6 +105,12 @@ function App() {
         <Route path="/customer-segmentation" element={
           <Layout>
             <CustomerChat />
+          </Layout>
+        } />
+
+        <Route path="/scenario-simulation" element={
+          <Layout>
+            <ScenarioSimulator />
           </Layout>
         } />
 
