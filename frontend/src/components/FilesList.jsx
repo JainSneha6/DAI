@@ -30,7 +30,7 @@ const MODEL_TO_URL = {
     "Sales, Demand & Financial Forecasting Model": "sales-forecasting",
     "Marketing ROI & Attribution Model": "marketing-roi",
     "Inventory & Replenishment Optimization Model": "inventory-optimization",
-    "Logistics & Supplier Risk Model": "supplier-risk",
+    "Logistics & Supplier Risk Model": "logistics-optimization",
     "Customer Segmentation & Modeling": "customer-segmentation",
 };
 
@@ -51,7 +51,7 @@ const categoryColors = {
     inventory: "cyan",
     marketing: "pink",
     operations: "indigo",
-    finance: "amber",
+    logistics: "amber",
     "supply chain": "emerald"
 };
 
@@ -248,7 +248,7 @@ export default function FilesListWithModels() {
                             onToggleExpand={() => setExpandedFile(expandedFile === file.name ? null : file.name)}
                             onDelete={() => deleteFile(file.name)}
                             onAnalyze={() => navigate(`/analysis/${file.name}`)}
-                            onViewModel={(modelUrl) => navigate(`/models/${modelUrl}?file=${file.name}`)}
+                            onViewModel={(modelUrl) => navigate(`/${modelUrl}`)}
                             getCategoryColor={getCategoryColor}
                         />
                     );

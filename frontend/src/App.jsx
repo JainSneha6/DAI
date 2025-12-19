@@ -11,6 +11,7 @@ import TimeSeriesChat from "./pages/TimeSeries";
 import MarketingChat from "./pages/MarketingChat";
 import InventoryChat from "./pages/Inventory";
 import LogisticsChat from "./pages/Logistics";
+import CustomerChat from "./pages/Customer";
 
 function App() {
   return (
@@ -97,6 +98,12 @@ function App() {
         <Route path="/logistics-optimization" element={
           <Layout>
             <LogisticsChat />
+          </Layout>
+        } />
+
+        <Route path="/customer-segmentation" element={
+          <Layout>
+            <CustomerChat />
           </Layout>
         } />
 

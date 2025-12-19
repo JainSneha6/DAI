@@ -22,20 +22,6 @@ export default function DecisivAIHomepage() {
         </svg>
       </div>
 
-      {/* Floating accent elements */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 0.5 }}
-        className="absolute top-32 right-24 w-2 h-2 bg-blue-400 rounded-full"
-      />
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 0.7 }}
-        className="absolute bottom-48 left-32 w-3 h-3 bg-violet-400 rounded-full"
-      />
-
       <div className="w-full max-w-6xl relative z-10">
         <div className="rounded-[2rem] shadow-[0_20px_80px_-20px_rgba(0,0,0,0.7)] overflow-hidden relative border border-white/10 bg-gradient-to-br from-[#0d111a]/80 to-[#0e1320]/60 backdrop-blur-2xl">
 
@@ -118,16 +104,7 @@ export default function DecisivAIHomepage() {
                 />
               </motion.a>
 
-              {/* Trust indicator */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-12 text-slate-500 text-sm flex items-center gap-2"
-              >
-                <TrendingUp size={16} className="text-emerald-400" />
-                Trusted by data-driven teams
-              </motion.div>
+
             </main>
           </div>
 

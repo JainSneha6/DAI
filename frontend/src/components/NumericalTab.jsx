@@ -155,8 +155,8 @@ export default function NumericalTab({ data }) {
             })}
 
             {/* Box Plots */}
-            <ChartCard title="Box Plot Comparison" icon={Activity} height="500px">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ChartCard title="Box Plot Comparison" icon={Activity} height="auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
                     {columns.slice(0, 9).map((col, idx) => {
                         const boxData = boxPlotData[col];
                         if (!boxData) return null;

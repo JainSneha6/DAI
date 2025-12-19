@@ -122,7 +122,7 @@ export default function TimeSeriesChat() {
     return (
       <div className="mt-4 p-4 bg-gradient-to-br from-white/5 to-white/[0.02] rounded-lg border border-white/10 backdrop-blur-xl">
         <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-5 h-5 text-blue-300" />
+          <TrendingUp className="w-5 h-5 text-blue-400" />
           <h4 className="font-semibold text-slate-100">Forecast Visualization</h4>
         </div>
 
@@ -136,7 +136,7 @@ export default function TimeSeriesChat() {
                 </span>
                 <div className="flex-1 bg-slate-800/40 rounded-full h-6 relative overflow-hidden border border-slate-700">
                   <div
-                    className="bg-gradient-to-r from-blue-500 to-violet-500 h-full rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-300 flex items-center justify-end pr-2"
                     style={{ width: `${percentage}%` }}
                   >
                     <span className="text-xs font-semibold text-white">{value.toFixed(2)}</span>
@@ -173,7 +173,7 @@ export default function TimeSeriesChat() {
     return (
       <div className="mt-3 p-3 bg-gradient-to-br from-white/5 to-white/[0.02] rounded-lg border border-white/10 backdrop-blur-xl">
         <div className="flex items-center gap-2 mb-2">
-          <Database className="w-4 h-4 text-violet-300" />
+          <Database className="w-4 h-4 text-blue-400" />
           <h5 className="font-semibold text-slate-100 text-sm">Model Details</h5>
         </div>
         <div className="space-y-1 text-xs text-slate-200">
@@ -197,9 +197,9 @@ export default function TimeSeriesChat() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f1724] via-[#111827] to-[#071029] relative overflow-hidden text-slate-100">
 
-      {/* Decorative backgrounds */}
+      {/* BLUE theme decorative backgrounds */}
       <div className="absolute top-16 left-28 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-12 right-36 w-[28rem] h-[28rem] bg-violet-600/12 rounded-full blur-[120px]" />
+      <div className="absolute bottom-12 right-36 w-[28rem] h-[28rem] bg-blue-500/12 rounded-full blur-[120px]" />
 
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -218,15 +218,15 @@ export default function TimeSeriesChat() {
         {/* Header */}
         <div className="p-6 border-b border-white/6">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-white/5 to-white/[0.02] p-3 rounded-xl backdrop-blur-sm border border-white/10">
-              <BarChart3 className="w-8 h-8 text-blue-300" />
+            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 p-3 rounded-xl backdrop-blur-sm border border-blue-400/30">
+              <BarChart3 className="w-8 h-8 text-blue-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-100">Sales, Demand & Financial Forecasting Assistant</h1>
               <p className="text-slate-400 text-sm">AI-powered forecasting & analysis</p>
             </div>
             <div className="ml-auto text-sm text-slate-400 flex items-center gap-3">
-              <Sparkles className="w-4 h-4 text-amber-300" />
+              <Sparkles className="w-4 h-4 text-blue-400" />
               {availableModels.length > 0 ? (
                 <span>{availableModels.length} model{availableModels.length !== 1 ? 's' : ''} available</span>
               ) : (
@@ -242,19 +242,18 @@ export default function TimeSeriesChat() {
             <div key={idx} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
 
               {message.role === 'assistant' && (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
                   <Bot className="w-6 h-6 text-white" />
                 </div>
               )}
 
               <div
-                className={`max-w-2xl ${
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-blue-600/80 to-violet-700/80 text-white'
+                className={`max-w-2xl ${message.role === 'user'
+                    ? 'bg-gradient-to-br from-blue-600/80 to-blue-700/80 text-white'
                     : message.isError
-                    ? 'bg-red-600/10 border border-red-400/20 text-red-200'
-                    : 'bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 text-slate-200'
-                } rounded-2xl p-4 shadow-sm`}
+                      ? 'bg-red-600/10 border border-red-400/20 text-red-200'
+                      : 'bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 text-slate-200'
+                  } rounded-2xl p-4 shadow-sm`}
               >
                 <div className="whitespace-pre-wrap break-words">{message.content}</div>
 
@@ -280,7 +279,7 @@ export default function TimeSeriesChat() {
 
           {isLoading && (
             <div className="flex gap-3 justify-start">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-md">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
                 <Bot className="w-6 h-6 text-white" />
               </div>
               <div className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-2xl p-4 shadow-sm">
@@ -331,7 +330,7 @@ export default function TimeSeriesChat() {
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="px-6 py-3 my-2 bg-gradient-to-r from-blue-600 to-violet-700 hover:from-blue-700 hover:to-violet-800 text-white rounded-xl font-medium transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed shadow-md flex items-center gap-2"
+              className="px-6 py-3 my-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed shadow-md flex items-center gap-2"
             >
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               Send
