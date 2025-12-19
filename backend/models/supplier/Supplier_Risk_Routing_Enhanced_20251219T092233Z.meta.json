@@ -1,0 +1,61 @@
+{
+  "created_at": "2025-12-19T09:22:33.742100Z",
+  "model_name": "Enhanced Logistics & Supplier Risk Model",
+  "model_version": "2.0",
+  "input_file": "Data5.csv",
+  "data_summary": {
+    "total_rows": 100,
+    "total_suppliers": 100,
+    "quality_score": 0.985,
+    "demand_rows": 100
+  },
+  "models_used": {
+    "statistical_scoring": true,
+    "ml_model": true,
+    "ml_model_type": "RandomForest",
+    "survival_model": true
+  },
+  "optimization": {
+    "solver": "MILP",
+    "total_assignments": 186,
+    "total_routes": 186
+  },
+  "configuration": {
+    "risk_weight": 10.0,
+    "vehicle_capacity": 10000.0,
+    "use_milp": true,
+    "use_random_forest": true,
+    "time_horizon_limit": null
+  },
+  "detected_columns": {
+    "shipment_id": "shipment_id",
+    "origin": "origin",
+    "destination": "destination",
+    "pickup_date": "pickup_date",
+    "delivery_date": "delivery_date",
+    "status": "status",
+    "weight": "weight_kg",
+    "volume": "volume_m3",
+    "carrier": "carrier",
+    "vehicle": "vehicle_type",
+    "distance": "distance_km",
+    "expected_time": "expected_delivery_time_hours",
+    "actual_time": "actual_delivery_time_hours",
+    "delay": "delay_hours",
+    "cost": "cost_usd",
+    "priority": "priority",
+    "item_count": "item_count",
+    "temp_controlled": "temperature_controlled",
+    "hazardous": "hazardous",
+    "tracking_url": "tracking_url",
+    "supplier_id": "Supplier ID",
+    "supplier_name": "Supplier ID",
+    "supplier_email": "Supplier Email",
+    "customer": null,
+    "lat": null,
+    "lon": null,
+    "ontime": null,
+    "defect": null,
+    "supplier": "Supplier ID"
+  }
+}

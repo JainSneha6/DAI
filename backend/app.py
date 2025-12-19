@@ -7,6 +7,7 @@ from routes.timeseries_chat_blueprint import bp as timeseries_chat_bp
 from routes.marketing_chat_blueprint import bp as marketing_chat_bp
 from routes.inventory_chat_blueprint import bp as inventory_chat_bp
 from routes.supplier_chat_blueprint import bp as supplier_chat_bp
+from routes.customer_chat_blueprint import bp as customer_chat_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -19,6 +20,7 @@ app.register_blueprint(timeseries_chat_bp)
 app.register_blueprint(marketing_chat_bp)
 app.register_blueprint(inventory_chat_bp)
 app.register_blueprint(supplier_chat_bp)
+app.register_blueprint(customer_chat_bp)
 
 if __name__ == '__main__':
     app.run(debug=True)

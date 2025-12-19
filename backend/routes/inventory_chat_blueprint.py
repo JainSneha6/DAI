@@ -204,7 +204,7 @@ class PlanGenerator:
     def get_schedule(plan_info, sku=None):
         """Extract schedule from loaded plan."""
         try:
-            models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+            models_dir = current_app.config.get('MODELS_FOLDER', 'models/inventory')
             artifact = ModelManager.load_model(models_dir, plan_info['pkl_file'])
             schedule = artifact.get('schedule', {})
             inventory = artifact.get('inventory_projection', {})
@@ -349,7 +349,7 @@ def get_vector_store():
             logger.error("Missing CYBORG_API_KEY")
             return None
         cyborg_index_name = current_app.config.get('CYBORG_INDEX_NAME', 'embedded_index_v16')
-        models_dir = current_app.config.get('MODELS_FOLDER', os.path.join(os.getcwd(), 'models'))
+        models_dir = current_app.config.get('MODELS_FOLDER', os.path.join(os.getcwd(), 'models/inventory'))
         keys_folder = os.path.join(models_dir, 'cyborg_indexes')
         key_path = os.path.join(keys_folder, f"{cyborg_index_name}.key")
         if not os.path.exists(key_path):
@@ -473,7 +473,7 @@ def chat():
         logger.info(f"Intent: {intent} (confidence: {confidence:.2f})")
         
         # 2. Get models directory
-        models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+        models_dir = current_app.config.get('MODELS_FOLDER', 'models/inventory')
         
         # 3. Handle optimize intent
         if intent == 'optimize':
@@ -609,7 +609,7 @@ def chat():
 def list_available_plans():
     """List all available plans for chat context."""
     try:
-        models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+        models_dir = current_app.config.get('MODELS_FOLDER', 'models/inventory')
         plans = ModelManager.list_models(models_dir)
         
         return jsonify({
@@ -638,7 +638,7 @@ def direct_schedule():
     sku = data.get('sku')
     
     try:
-        models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+        models_dir = current_app.config.get('MODELS_FOLDER', 'models/inventory')
         
         if file_path and run_inventory_optimization_pipeline:
             plan_result = PlanGenerator.generate_plan(file_path, horizon=horizon)
@@ -674,7 +674,7 @@ def direct_schedule():
 def download_plan(plan_name):
     """Download the full plan as CSV."""
     try:
-        models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+        models_dir = current_app.config.get('MODELS_FOLDER', 'models/inventory')
         plans = ModelManager.list_models(models_dir)
         plan_info = next((p for p in plans if p['name'] == plan_name), None)
         

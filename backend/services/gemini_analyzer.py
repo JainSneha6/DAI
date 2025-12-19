@@ -79,7 +79,6 @@ enterprise_data_to_models = [
         "data_domain": "Operations",
         "models": [
             "Inventory & Replenishment Optimization Model",
-            "Logistics & Supplier Risk Model"
         ]
     },
     {
@@ -375,8 +374,11 @@ def _call_sales_forecasting_runner(file_path: str, gemini_response: Dict[str, An
     # Place a canonical model_type expected by the time_series_pipeline entrance check
     analysis["model_type"] = "Sales, Demand & Financial Forecasting Model"
 
+    # Create sales-specific models directory
+    sales_models_dir = os.path.join(models_dir, "sales")
+
     try:
-        result = time_series_pipeline.analyze_file_and_run_pipeline(file_path, gemini_copy, models_dir=models_dir, **kwargs)
+        result = time_series_pipeline.analyze_file_and_run_pipeline(file_path, gemini_copy, models_dir=sales_models_dir, **kwargs)
         return {"success": True, "runner": "time_series_pipeline", "result": result}
     except Exception as e:
         logger.exception("Sales forecasting pipeline failed: %s", e)
@@ -398,8 +400,11 @@ def _call_marketing_mmm_runner(file_path: str, gemini_response: Dict[str, Any], 
     analysis = gemini_copy.setdefault("analysis", {})
     analysis["model_type"] = "Marketing ROI & Attribution Model"
 
+    # Create marketing-specific models directory
+    marketing_models_dir = os.path.join(models_dir, "marketing")
+
     try:
-        result = marketing_mmm_pipeline.analyze_file_and_run_pipeline(file_path, gemini_copy, models_dir=models_dir, **kwargs)
+        result = marketing_mmm_pipeline.analyze_file_and_run_pipeline(file_path, gemini_copy, models_dir=marketing_models_dir, **kwargs)
         return {"success": True, "runner": "marketing_mmm_pipeline", "result": result}
     except Exception as e:
         logger.exception("Marketing MMM pipeline failed: %s", e)
@@ -447,11 +452,14 @@ def _call_inventory_runner(
         k: v for k, v in kwargs.items() if k in allowed_kwargs
     }
 
+    # Create inventory-specific models directory
+    inventory_models_dir = os.path.join(models_dir, "inventory")
+
     try:
         result = inventory_optimization_pipeline.analyze_file_and_run_pipeline(
             file_path,
             gemini_copy,
-            models_dir=models_dir,
+            models_dir=inventory_models_dir,
             **filtered_kwargs
         )
         return {
@@ -512,11 +520,14 @@ def _call_supplier_runner(
 
     filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_kwargs}
 
+    # Create supplier-specific models directory
+    supplier_models_dir = os.path.join(models_dir, "supplier")
+
     try:
         result = supplier_risk_and_routing_pipeline.analyze_file_and_run_pipeline(
             file_path,
             gemini_copy,
-            models_dir=models_dir,
+            models_dir=supplier_models_dir,
             **filtered_kwargs
         )
         return {
@@ -575,11 +586,14 @@ def _call_customer_segmentation_runner(
 
     filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed_kwargs}
 
+    # Create customer-specific models directory
+    customer_models_dir = os.path.join(models_dir, "customer")
+
     try:
         result = customer_segmentation_pipeline.analyze_file_and_run_pipeline(
             file_path,
             gemini_copy,
-            models_dir=models_dir,
+            models_dir=customer_models_dir,
             **filtered_kwargs
         )
         return {

@@ -217,7 +217,7 @@ class ForecastGenerator:
     def generate_forecast(model_info, steps=10):
         """Generate forecast using loaded model."""
         try:
-            models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+            models_dir = current_app.config.get('MODELS_FOLDER', 'models/sales')
             model = ModelManager.load_model(models_dir, model_info['pkl_file'])
             meta = model_info['metadata']
             
@@ -423,7 +423,7 @@ def get_vector_store():
             return None
 
         cyborg_index_name = current_app.config.get('CYBORG_INDEX_NAME', 'embedded_index_v16')
-        models_dir = current_app.config.get('MODELS_FOLDER', os.path.join(os.getcwd(), 'models'))
+        models_dir = current_app.config.get('MODELS_FOLDER', os.path.join(os.getcwd(), 'models/sales'))
         keys_folder = os.path.join(models_dir, 'cyborg_indexes')
         key_path = os.path.join(keys_folder, f"{cyborg_index_name}.key")
 
@@ -562,7 +562,7 @@ def chat():
         logger.info(f"Intent: {intent} (confidence: {confidence:.2f})")
         
         # 2. Get models directory
-        models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+        models_dir = current_app.config.get('MODELS_FOLDER', 'models/sales')
         
         # 3. Handle forecast intent directly
         if intent == 'forecast':
@@ -694,7 +694,7 @@ def chat():
 def list_available_models():
     """List all available models for chat context."""
     try:
-        models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+        models_dir = current_app.config.get('MODELS_FOLDER', 'models/sales')
         models = ModelManager.list_models(models_dir)
         
         return jsonify({
@@ -722,7 +722,7 @@ def direct_forecast():
     model_name = data.get('model_name')
     
     try:
-        models_dir = current_app.config.get('MODELS_FOLDER', 'models')
+        models_dir = current_app.config.get('MODELS_FOLDER', 'models/sales')
         
         if model_name:
             models = ModelManager.list_models(models_dir)

@@ -4,6 +4,7 @@
 # - Deterministic preprocessing and adstock transform helper.
 # - Robust handling of categorical channels, missing values, and model persistence.
 # - Designed to be called from gemini_analyser (expects gemini_analysis with model_type "Marketing ROI & Attribution Model").
+# - FIXED: Now saves attribution data in metadata for chat interface
 #
 # Usage:
 #   from services.marketing_mmm_pipeline import analyze_file_and_run_pipeline
@@ -37,6 +38,10 @@ logger.addHandler(logging.NullHandler())
 COMMON_DATE_KEYWORDS = [
     "date", "datetime", "ds", "timestamp", "time"
 ]
+
+COMMON_START_DATE_KEYWORDS = ["start date", "start_date", "begin date", "launch date"]
+COMMON_END_DATE_KEYWORDS = ["end date", "end_date", "close date", "finish date"]
+COMMON_CHANNEL_KEYWORDS = ["campaign type", "channel", "type", "media type", "platform"]
 
 # Regex heuristics to find marketing spend/channel columns
 _SPEND_COL_REGEX = re.compile(
@@ -88,6 +93,16 @@ def read_csv_preview(file_path: str, nrows: int = 100000) -> pd.DataFrame:
     return pd.read_csv(file_path, nrows=nrows)
 
 
+def detect_column_by_keywords(columns: List[str], keywords: List[str]) -> Optional[str]:
+    low_cols = [c.lower() for c in columns]
+    for kw in keywords:
+        kw_low = kw.lower()
+        for i, c in enumerate(low_cols):
+            if kw_low in c:
+                return columns[i]
+    return None
+
+
 def detect_datetime_column(df: pd.DataFrame) -> Optional[str]:
     cols = df.columns.tolist()
     for k in COMMON_DATE_KEYWORDS:
@@ -100,6 +115,18 @@ def detect_datetime_column(df: pd.DataFrame) -> Optional[str]:
             return c
 
     return None
+
+
+def detect_start_date_column(columns: List[str]) -> Optional[str]:
+    return detect_column_by_keywords(columns, COMMON_START_DATE_KEYWORDS)
+
+
+def detect_end_date_column(columns: List[str]) -> Optional[str]:
+    return detect_column_by_keywords(columns, COMMON_END_DATE_KEYWORDS)
+
+
+def detect_channel_column(columns: List[str]) -> Optional[str]:
+    return detect_column_by_keywords(columns, COMMON_CHANNEL_KEYWORDS)
 
 
 def extract_spend_and_media_columns(columns: List[str]) -> List[str]:
@@ -138,6 +165,93 @@ def detect_target_column(df: pd.DataFrame, gemini_target: Optional[str] = None) 
             if coerced.notna().sum() > 0:
                 return c
     return None
+
+
+# -------------------------
+# Aggregation helper for campaign data
+# -------------------------
+
+
+def aggregate_to_daily(
+    df: pd.DataFrame,
+    start_col: Optional[str] = None,
+    end_col: Optional[str] = None,
+    channel_col: Optional[str] = None,
+    spend_col: Optional[str] = None,
+    target_col: Optional[str] = None,
+    other_metrics: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """
+    Aggregate campaign-level data to daily time-series by prorating spends/metrics over campaign periods.
+    - Prorate spend/target/metrics uniformly per day.
+    - Pivot spends per channel.
+    - Sum target and other metrics as totals per day.
+    Returns aggregated DataFrame with 'date' index.
+    """
+    if start_col is None or end_col is None or channel_col is None or spend_col is None or target_col is None:
+        return df  # No aggregation if missing keys
+
+    df = df.copy()
+    df[start_col] = pd.to_datetime(df[start_col], errors="coerce")
+    df[end_col] = pd.to_datetime(df[end_col], errors="coerce")
+    df = df.dropna(subset=[start_col, end_col])  # Drop invalid dates
+
+    other_metrics = other_metrics or []
+    daily_rows = []
+    for _, row in df.iterrows():
+        start = row[start_col]
+        end = row[end_col]
+        if pd.isna(start) or pd.isna(end) or end < start:
+            continue
+        days = (end - start).days + 1
+        daily_spend = row[spend_col] / days if days > 0 else 0.0
+        daily_target = row[target_col] / days if days > 0 else 0.0
+        daily_metrics = {m: row[m] / days if days > 0 else 0.0 for m in other_metrics if m in row}
+        dates = pd.date_range(start, end)
+        for date in dates:
+            daily_row = {
+                'date': date,
+                'channel': row[channel_col],
+                'daily_spend': daily_spend,
+                'daily_target': daily_target,
+            }
+            daily_row.update({f'daily_{m.lower().replace(" ", "_")}': v for m, v in daily_metrics.items()})
+            daily_rows.append(daily_row)
+
+    if not daily_rows:
+        raise ValueError("No valid campaign periods found for aggregation.")
+
+    df_daily = pd.DataFrame(daily_rows)
+
+    # Pivot spends per channel
+    spend_pivot = df_daily.pivot_table(
+        index='date',
+        columns='channel',
+        values='daily_spend',
+        aggfunc='sum',
+        fill_value=0.0
+    ).add_prefix('spend_')
+
+    # Sum target per date
+    totals = df_daily.groupby('date').agg({
+        'daily_target': 'sum',
+    }).rename(columns={
+        'daily_target': target_col,
+    })
+
+    # Sum other metrics per date (total, not per channel)
+    if other_metrics:
+        metric_agg = df_daily.groupby('date').agg({
+            f'daily_{m.lower().replace(" ", "_")}': 'sum' for m in other_metrics
+        }).rename(columns={
+            f'daily_{m.lower().replace(" ", "_")}': m for m in other_metrics
+        })
+        totals = totals.join(metric_agg)
+
+    # Join spends
+    df_agg = totals.join(spend_pivot).reset_index().sort_values('date')
+
+    return df_agg
 
 
 # -------------------------
@@ -265,6 +379,112 @@ def evaluate_regression(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, flo
     return {"r2": r2, "rmse": rmse, "mae": mae, "mape": mape}
 
 
+def compute_attribution_marginal(
+    model,
+    X_all: pd.DataFrame,
+    feature_names: List[str],
+    spend_cols_original: List[str],
+    df_original: pd.DataFrame,
+    target_col: str = None,  # NEW: need to know if target is ROAS or Revenue
+) -> Dict[str, Any]:
+    """
+    ROAS-AWARE attribution computation.
+    
+    Handles two cases:
+    1. If target is ROAS (Return on Ad Spend): multiply predictions by spend to get revenue
+    2. If target is Revenue: use predictions directly
+    
+    Method: For each channel, set its spend to zero and measure the drop in predicted revenue.
+    """
+    mapping: Dict[str, Any] = {}
+    
+    # Check if target is ROAS (ratio) or Revenue (dollars)
+    is_roas_target = target_col and ('roas' in target_col.lower() or 'return on ad spend' in target_col.lower())
+    
+    # Get baseline prediction with all channels active
+    baseline_pred = model.predict(X_all.values)
+    
+    if is_roas_target:
+        # Target is ROAS (ratio), need to convert to revenue
+        # Revenue = ROAS × Spend
+        
+        # Get total spend per observation (row)
+        total_spend_per_row = pd.Series(0.0, index=df_original.index)
+        for orig in spend_cols_original:
+            if orig in df_original.columns:
+                spend = pd.to_numeric(df_original[orig], errors="coerce").fillna(0.0)
+                total_spend_per_row += spend
+        
+        # Convert ROAS predictions to revenue: Revenue = ROAS × Spend
+        baseline_revenue = baseline_pred * total_spend_per_row.values
+        baseline_total = float(baseline_revenue.sum())
+        
+        logger.info(f"🎯 Target is ROAS (ratio). Converting to revenue...")
+        logger.info(f"   Total spend across all channels: ${total_spend_per_row.sum():,.2f}")
+        logger.info(f"   Average predicted ROAS: {baseline_pred.mean():.2f}x")
+        logger.info(f"   Baseline total revenue (ROAS × Spend): ${baseline_total:,.2f}")
+    else:
+        # Target is already in revenue dollars
+        baseline_total = float(baseline_pred.sum())
+        logger.info(f"🎯 Target is Revenue/Dollars. Baseline total: ${baseline_total:,.2f}")
+    
+    # Now compute attribution for each channel
+    for orig in spend_cols_original:
+        feat_name = f"_m_{orig}"
+        
+        if feat_name not in feature_names:
+            logger.warning(f"Feature {feat_name} not found in model features")
+            continue
+        
+        # Get raw spend from original dataframe
+        if orig not in df_original.columns:
+            logger.warning(f"Column {orig} not found in dataframe")
+            continue
+            
+        raw_spend = pd.to_numeric(df_original[orig], errors="coerce").fillna(0.0)
+        total_spend = float(raw_spend.sum())
+        
+        if total_spend == 0:
+            logger.info(f"Skipping {orig} - zero spend")
+            continue
+        
+        # Create counterfactual: what if this channel had zero spend?
+        X_counterfactual = X_all.copy()
+        feat_idx = feature_names.index(feat_name)
+        X_counterfactual.iloc[:, feat_idx] = 0.0
+        
+        # Predict without this channel
+        counterfactual_pred = model.predict(X_counterfactual.values)
+        
+        if is_roas_target:
+            # For ROAS target: recalculate spend WITHOUT this channel
+            # Revenue without channel = Predicted_ROAS × (Total_Spend - This_Channel_Spend)
+            counterfactual_spend_per_row = total_spend_per_row - raw_spend
+            counterfactual_revenue = counterfactual_pred * counterfactual_spend_per_row.values
+            counterfactual_total = float(counterfactual_revenue.sum())
+        else:
+            counterfactual_total = float(counterfactual_pred.sum())
+        
+        # Contribution = revenue lost without this channel
+        contribution = baseline_total - counterfactual_total
+        
+        # ROI = revenue contribution / channel spend
+        roi = float(contribution / total_spend) if total_spend > 0 else None
+        
+        # Clean channel name
+        channel_name = orig.replace('spend_', '')
+        
+        logger.info(f"   ✓ {channel_name}: spend=${total_spend:,.0f}, contribution=${contribution:,.0f}, ROI={roi:.2f}x" if roi else f"   ✓ {channel_name}: spend=${total_spend:,.0f}, contribution=${contribution:,.0f}")
+        
+        mapping[channel_name] = {
+            "total_spend": total_spend,
+            "approx_contribution": contribution,
+            "approx_roi": roi,
+        }
+    
+    return mapping
+
+
 def compute_attribution_from_coefs(
     coefs: np.ndarray,
     feature_names: List[str],
@@ -272,34 +492,67 @@ def compute_attribution_from_coefs(
     df_original: pd.DataFrame,
     adstock_decay: float = 0.5,
     saturation_alpha: float = 0.7,
+    model_obj=None,  # NEW: pass the trained model
+    X_all=None,      # NEW: pass the feature matrix
+    target_col: str = None,  # NEW: pass target column name for ROAS detection
 ) -> Dict[str, Any]:
     """
-    Best-effort mapping of coefficients back to spend channel contributions and ROI.
-    Note: this is approximate because coefficients were learned on standardized features.
-    We recompute adstock + saturation on raw spends and multiply by coefficient to produce
-    an approximate channel contribution.
+    Compute attribution with support for both methods:
+    1. Marginal contribution (preferred - more accurate)
+    2. Coefficient-based (fallback - faster but less accurate)
+    
+    Returns a clean dictionary suitable for JSON serialization with channel names as keys.
     """
+    
+    # PREFERRED METHOD: Marginal contribution if we have the model
+    if model_obj is not None and X_all is not None:
+        logger.info("Computing attribution using marginal contribution method (ROAS-aware)")
+        try:
+            return compute_attribution_marginal(
+                model_obj,
+                X_all,
+                feature_names,
+                spend_cols_original,
+                df_original,
+                target_col=target_col  # Pass target column for ROAS detection
+            )
+        except Exception as e:
+            logger.exception(f"Marginal contribution failed, falling back to coefficient method: {e}")
+            # Fall through to coefficient method
+    
+    # FALLBACK METHOD: Coefficient-based (less accurate due to standardization issues)
+    logger.info("Computing attribution using coefficient method (less accurate)")
     mapping: Dict[str, Any] = {}
     coef_map = {n: float(c) for n, c in zip(feature_names, coefs)}
+    
     for orig in spend_cols_original:
         feat_name = f"_m_{orig}"
         coef = float(coef_map.get(feat_name, 0.0))
+        
         # Recompute transformed spend from raw column
         raw_spend = pd.to_numeric(df_original[orig], errors="coerce").fillna(0.0) if orig in df_original.columns else pd.Series([0.0] * len(df_original))
         transformed = adstock_transform(raw_spend, decay=adstock_decay)
         if saturation_alpha is not None and saturation_alpha != 1.0:
             transformed = saturation_transform(transformed, alpha=saturation_alpha)
+        
         total_transformed = float(transformed.sum())
         total_spend = float(raw_spend.sum())
+        
+        # NOTE: This is approximate because coefficient was learned on standardized features
+        # The scale may be off by orders of magnitude
         approx_contribution = float(coef * total_transformed)
         approx_roi = float(approx_contribution / total_spend) if total_spend != 0 else None
-        mapping[orig] = {
-            "coef": coef,
+        
+        # Clean channel name - remove "spend_" prefix if present
+        channel_name = orig.replace('spend_', '')
+        
+        # Store with simplified structure for chat interface
+        mapping[channel_name] = {
             "total_spend": total_spend,
-            "total_transformed": total_transformed,
             "approx_contribution": approx_contribution,
             "approx_roi": approx_roi,
         }
+    
     return mapping
 
 
@@ -328,10 +581,11 @@ def run_marketing_mmm_pipeline(
     - Build feature matrix with adstock + saturation
     - Train ElasticNetCV, RidgeCV, LassoCV
     - Evaluate on test set and pick best model by R2 (primary) then RMSE
-    - Persist best model + metadata and return detailed results
+    - Persist best model + metadata (including attribution data) and return detailed results
     """
     df_raw = pd.read_csv(file_path)
     df_raw = df_raw.dropna(axis=1, how="all")
+    row_count_original = len(df_raw)
 
     # derive gemini_target from model_targets map (if present)
     gemini_target = None
@@ -358,8 +612,51 @@ def run_marketing_mmm_pipeline(
     if target_col is None:
         raise ValueError("No explicit numeric target column supplied by Gemini or hint. Aborting in strict mode.")
 
+    # Detect aggregation columns
+    start_date_col = detect_start_date_column(df_raw.columns)
+    end_date_col = detect_end_date_column(df_raw.columns)
+    channel_col = detect_channel_column(df_raw.columns)
+    spend_col = extract_spend_and_media_columns(df_raw.columns)
+    spend_col = spend_col[0] if spend_col else None  # Assume first match
+
+    # Detect other metrics: numeric columns not target/spend/dates/channel
+    other_metrics = []
+    for c in df_raw.columns:
+        if c in [target_col, spend_col, start_date_col, end_date_col, channel_col]:
+            continue
+        if pd.api.types.is_numeric_dtype(df_raw[c]) or pd.to_numeric(df_raw[c], errors='coerce').notna().any():
+            other_metrics.append(c)
+
+    # Aggregate to daily if possible
+    df = df_raw
+    aggregated = False
+    row_count_aggregated = row_count_original
+    data_start_date = None
+    data_end_date = None
+    unique_channels = []
+    if start_date_col and end_date_col and channel_col and spend_col:
+        try:
+            df = aggregate_to_daily(
+                df_raw,
+                start_col=start_date_col,
+                end_col=end_date_col,
+                channel_col=channel_col,
+                spend_col=spend_col,
+                target_col=target_col,
+                other_metrics=other_metrics
+            )
+            aggregated = True
+            row_count_aggregated = len(df)
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date'])
+                data_start_date = str(df['date'].min())
+                data_end_date = str(df['date'].max())
+            unique_channels = [col.replace('spend_', '') for col in df.columns if col.startswith('spend_')]
+        except Exception as e:
+            logger.warning(f"Aggregation failed: {e}. Falling back to raw data.")
+
     # Identify spend/media columns heuristically from header + gemini key_columns if present
-    header_cols = list(df_raw.columns)
+    header_cols = list(df.columns)
     spend_cols = extract_spend_and_media_columns(header_cols)
 
     # Also accept explicit gemini hint (e.g. gemini may provide key_columns)
@@ -369,13 +666,17 @@ def run_marketing_mmm_pipeline(
             if kc in header_cols and kc not in spend_cols and _SPEND_COL_REGEX.search(kc):
                 spend_cols.append(kc)
 
+    # If aggregated, prioritize pivoted spend_ columns
+    if aggregated:
+        spend_cols = [c for c in header_cols if c.startswith('spend_')]
+
     # If still no spend columns, heuristically pick top-N numeric columns excluding target
     if not spend_cols:
         numeric_candidates = []
         for c in header_cols:
             if c == target_col:
                 continue
-            coerced = pd.to_numeric(df_raw[c], errors="coerce")
+            coerced = pd.to_numeric(df[c], errors="coerce")
             if coerced.notna().sum() > 0:
                 numeric_candidates.append((c, float(coerced.sum())))
         numeric_candidates = sorted(numeric_candidates, key=lambda x: x[1], reverse=True)
@@ -389,7 +690,7 @@ def run_marketing_mmm_pipeline(
 
     # Build transformed features (adstock + saturation) and scaler
     X_all, feature_names, scaler = prepare_marketing_matrix(
-        df_raw,
+        df,
         spend_cols,
         other_exog_cols=other_exogs,
         apply_adstock=apply_adstock,
@@ -401,7 +702,7 @@ def run_marketing_mmm_pipeline(
         raise RuntimeError("After preprocessing there are no valid features to train on.")
 
     # Build y
-    y = pd.to_numeric(df_raw[target_col], errors="coerce").fillna(method="ffill").fillna(method="bfill")
+    y = pd.to_numeric(df[target_col], errors="coerce").fillna(method="ffill").fillna(method="bfill")
     if y.isna().all():
         raise ValueError("Target column contains only NaNs after coercion. Aborting.")
 
@@ -409,10 +710,10 @@ def run_marketing_mmm_pipeline(
     X_all = X_all.loc[y.index]
 
     # Train/test split: if a datetime column exists, split by time to preserve causality
-    datetime_col = detect_datetime_column(df_raw)
+    datetime_col = detect_datetime_column(df)
     if datetime_col:
         try:
-            idx_sorted = pd.to_datetime(df_raw[datetime_col], errors="coerce").sort_values().index
+            idx_sorted = pd.to_datetime(df[datetime_col], errors="coerce").sort_values().index
             ord_df = pd.DataFrame({"_ord_index": idx_sorted})
             n = len(ord_df)
             test_size = max(1, int(n * test_frac))
@@ -570,8 +871,35 @@ def run_marketing_mmm_pipeline(
             logger.exception("Fallback OLS failed: %s", e)
             raise
 
-    # Save model artifact & metadata
+    # -----------------
+    # CRITICAL FIX: Compute attribution BEFORE saving metadata
+    # Using ROAS-aware marginal contribution method
+    # -----------------
+    logger.info("Computing attribution from model coefficients...")
+    try:
+        attribution = compute_attribution_from_coefs(
+            coefs, 
+            feature_names, 
+            spend_cols, 
+            df, 
+            adstock_decay=adstock_decay, 
+            saturation_alpha=saturation_alpha,
+            model_obj=final_model_obj,  # Pass the trained model for marginal contribution
+            X_all=X_all,                 # Pass the feature matrix
+            target_col=target_col        # Pass target column name for ROAS detection
+        )
+        logger.info(f"Attribution computed successfully for {len(attribution)} channels")
+    except Exception as e:
+        logger.exception("Attribution computation failed: %s", e)
+        attribution = {}
+
+    # Save model artifact first
     saved_model_path = save_model_artifact(final_model_obj, best_model_name, models_dir=models_dir)
+    
+    # Get best model metrics
+    best_metrics = best_model_info.get("metrics", {})
+    
+    # Build metadata with attribution and metrics included
     metadata = {
         "model_name": best_model_name,
         "target_column": target_col,
@@ -583,18 +911,30 @@ def run_marketing_mmm_pipeline(
         "saturation_alpha": saturation_alpha,
         "train_n": int(len(X_all)),
         "gemini_model_targets": gemini_analysis.get("analysis", {}).get("model_targets") if gemini_analysis else None,
+        "date_start_column": start_date_col,
+        "date_end_column": end_date_col,
+        "channel_column": channel_col,
+        "spend_column": spend_col,
+        "exog_columns_used": other_exogs,
+        "other_metrics": other_metrics,
+        "unique_channels": unique_channels,
+        "data_start_date": data_start_date,
+        "data_end_date": data_end_date,
+        "row_count_original": row_count_original,
+        "row_count_aggregated": row_count_aggregated,
+        "aggregated": aggregated,
+        # CRITICAL: Add attribution and metrics to metadata
+        "attribution": attribution,
+        "metrics": best_metrics,
     }
+    
+    # Save metadata with attribution included
     saved_meta_path = save_metadata(metadata, saved_model_path, models_dir=models_dir)
-
-    # Attribution mapping (best-effort)
-    try:
-        attribution = compute_attribution_from_coefs(coefs, feature_names, spend_cols, df_raw, adstock_decay=adstock_decay, saturation_alpha=saturation_alpha)
-    except Exception:
-        attribution = {}
+    logger.info(f"Model and metadata saved successfully. Attribution data included for chat interface.")
 
     results["best_model"] = {
         "name": best_model_name,
-        "metrics": best_model_info.get("metrics"),
+        "metrics": best_metrics,
         "coefs": dict(zip(feature_names, [float(c) for c in coefs.tolist()])),
         "attribution": attribution,
     }

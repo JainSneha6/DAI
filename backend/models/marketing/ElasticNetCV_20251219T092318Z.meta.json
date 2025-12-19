@@ -1,0 +1,77 @@
+{
+  "model_name": "ElasticNetCV",
+  "target_column": "Return on Ad Spend (ROAS)",
+  "created_at": "2025-12-19T09:23:18.395570Z",
+  "feature_names": [
+    "_m_spend_Email Marketing",
+    "_m_spend_Social Media Ads",
+    "_n_date",
+    "_n_Campaign ID",
+    "_n_Actual Spend",
+    "_n_Impressions",
+    "_n_Clicks",
+    "_n_Conversions",
+    "_n_Revenue Generated"
+  ],
+  "spend_columns_detected": [
+    "spend_Email Marketing",
+    "spend_Social Media Ads"
+  ],
+  "adstock_applied": true,
+  "adstock_decay": 0.5,
+  "saturation_alpha": 0.7,
+  "train_n": 2223,
+  "gemini_model_targets": {
+    "Marketing ROI & Attribution Model": "Return on Ad Spend (ROAS)",
+    "Pricing & Revenue Optimization Model": "Revenue Generated",
+    "Sentiment & Intent NLP Model": null
+  },
+  "date_start_column": "Start Date",
+  "date_end_column": "End Date",
+  "channel_column": "Campaign Type",
+  "spend_column": "Budget",
+  "exog_columns_used": [
+    "date",
+    "Campaign ID",
+    "Actual Spend",
+    "Impressions",
+    "Clicks",
+    "Conversions",
+    "Revenue Generated"
+  ],
+  "other_metrics": [
+    "Campaign ID",
+    "Actual Spend",
+    "Impressions",
+    "Clicks",
+    "Conversions",
+    "Revenue Generated"
+  ],
+  "unique_channels": [
+    "Email Marketing",
+    "Social Media Ads"
+  ],
+  "data_start_date": "2022-06-01 00:00:00",
+  "data_end_date": "2030-10-31 00:00:00",
+  "row_count_original": 100,
+  "row_count_aggregated": 2223,
+  "aggregated": true,
+  "attribution": {
+    "Email Marketing": {
+      "total_spend": 27000000.0,
+      "approx_contribution": 3924896.3060090085,
+      "approx_roi": 0.1453665298521855
+    },
+    "Social Media Ads": {
+      "total_spend": 27500000.0,
+      "approx_contribution": 3932039.383515552,
+      "approx_roi": 0.14298325030965645
+    }
+  },
+  "metrics": {
+    "r2": 0.9962050343864746,
+    "rmse": 0.004565992472394431,
+    "mae": 0.0027945167345930773,
+    "mape": 3.603834214080136
+  }
+}
