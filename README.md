@@ -232,16 +232,9 @@ flowchart LR
 Project Demo Video Link - https://youtu.be/fQVhEspreRc
 
 
-
-
-
 ## Technology Stack
 
 ![image](https://github.com/user-attachments/assets/1353361e-5251-4906-a367-cb571e305e51)
-
-
-
-
 
 
 ## Technology Comparison of DecisivAI with other alternatives
